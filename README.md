@@ -147,7 +147,7 @@ python -m market_lifecycle.cli \
 
 在任何同步此專案的 Windows 電腦上，執行專案根目錄的 `run_predict_market.bat`。程式會更新資料、產生今日報告，並維護不可回填的前瞻研究紀錄。
 
-跨電腦接手時，先讀 `research/HANDOFF_CURRENT.md`。該檔保存目前唯一結論協議：八卦生命週期、46,000 灘頭堡攻防、夜日盤驗證、人類行為模式、健康價值判斷、買賣風控標註、孫子兵法戰略語言與每日自主進化邊界。換電腦後若 Codex App heartbeat automation 未同步，依該檔重建每日自主進化監控，不需重新向使用者詢問完整邏輯。
+跨電腦接手時，先讀 `research/HANDOFF_CURRENT.md` 與 `docs/cross_device_continuity.md`。前者保存目前唯一結論協議：八卦生命週期、46,000 灘頭堡攻防、夜日盤驗證、人類行為模式、健康價值判斷、買賣風控標註、孫子兵法戰略語言與每日自主進化邊界；後者保存新電腦復原 SOP。換電腦後若 Codex App heartbeat automation 未同步，依這兩份文件重建每日自主進化監控，不需重新向使用者詢問完整邏輯。
 
 每日自主監控必須上網覽讀國際重大財經政治消息，整理 `reports/daily_global_news_risk.json`，再併入 `reports/today_market_forecast.md` 的外部事件重置與風險評估；若新聞風險缺漏，報告必須明確標示缺口。
 

@@ -33,5 +33,10 @@
 
 ### GitHub 狀態
 
-- 目前 `G:/我的雲端硬碟/codex/大盤週期研究` 尚不是 Git repository，因此本次變更只能先登記在本地變更紀錄，尚未 commit / push 到 GitHub。
-- 若要比照 `個股研究` 中央羅盤流程，需要先初始化 Git repo 或接上既有 GitHub remote，再提交本變更紀錄與程式修正。
+- 已建立 Git repository，remote 指向 `https://github.com/liuh8541-netizen/market-cycle-research.git`。
+- 初始治理版本已推送到 GitHub `main`，commit `58d117b163343068de9d4cfa84a9fce6608072b7`。
+
+### 跨電腦接續
+
+- 新增 `docs/cross_device_continuity.md`，記錄換電腦後的接續 SOP：clone/pull、安裝套件、恢復 FinMind Sponsor token、執行預測、安裝 Windows 每日排程、重建 Codex heartbeat 自主進化任務。
+- `README.md` 補上跨電腦接手入口，確保另一台電腦可依 GitHub、handoff 文件與 SOP 延續目前模型設定。
