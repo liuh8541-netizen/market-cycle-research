@@ -1,0 +1,35 @@
+{
+  "closeout_id": "market_cycle_research_2026_07_24",
+  "created_at": "2026-07-24",
+  "purpose": "Close the fixed historical research program without lowering or redefining any gate.",
+  "target": {
+    "accuracy": 0.9,
+    "cases": 100,
+    "coverage": 0.1,
+    "wilson_95_lower": 0.8,
+    "must_beat_strongest_baseline": true,
+    "no_posthoc_subgroups": true
+  },
+  "required_evidence": [
+    "reports/validation_leakage_audit.md",
+    "reports/direction_search_saturation_audit.json",
+    "reports/three_layer_purged_research.json",
+    "reports/simple_night_gap_baseline_audit.json",
+    "reports/microstructure_gap_amplitude.json",
+    "reports/cross_sectional_breadth_cycle.json",
+    "reports/breadth_transition_episode.json",
+    "reports/securities_lending_pressure.json",
+    "reports/market_valuation_breadth_v2.json",
+    "reports/market_cap_structure.json",
+    "reports/foreign_shareholding_structure.json",
+    "reports/loan_collateral_structure_v2.json",
+    "reports/taiex_early_pulse_close.json",
+    "reports/orderbook_early_pulse_close.json",
+    "reports/orderbook_remaining_risk.json",
+    "reports/sector_early_pulse_close.json",
+    "reports/option_tail_cash_close.json",
+    "reports/research_ledger.md"
+  ],
+  "completion_rule": "All required evidence must exist and parse where applicable; retrospective directional search closes at the saturation decision. Prospective monitoring continues as monitoring and is not counted as unfinished historical research.",
+  "production_rule": "Only a target-specific submodel that independently passes every locked gate may emit a formal signal. A passing opening-gap model may not be relabeled as cash-close or multi-day direction."
+}

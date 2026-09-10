@@ -1,0 +1,42 @@
+{
+  "experiment": "breadth_transition_episode_v1",
+  "locked_at": "2026-07-23",
+  "hypothesis": "A large cross-sectional breadth sign reversal is a discrete market-cycle transition; institutional breadth agreement or override may improve the subsequent 20-trading-day TWII direction forecast.",
+  "target": "TWII close direction from event date to 20 actual cash-market trading days later",
+  "eligibility": {
+    "minimum_position": 1512,
+    "reason": "Preserve six years of causal history before formal evaluation."
+  },
+  "event": {
+    "definition": "Price advance-decline breadth changes sign and both current and prior absolute breadth are at least 0.20.",
+    "absolute_breadth_threshold": 0.2,
+    "institutional_threshold": 0.1,
+    "minimum_origin_spacing": 20,
+    "threshold_selection": "Selected using unlabeled feasibility counts only; 0.20 was the strongest tested round threshold retaining at least 100 non-overlapping base and institution-confirmed events."
+  },
+  "variants": {
+    "price_transition": "On every non-overlapping event, predict the sign of current price breadth.",
+    "institutional_override": "On the identical event dates, use institutional-breadth sign when its absolute value is at least 0.10; otherwise use current price-breadth sign.",
+    "institutional_confirmation": "Select events where institutional breadth agrees with current price breadth and has absolute value at least 0.10, apply cooldown after confirmation, and predict the agreed sign."
+  },
+  "baselines": [
+    "prior_majority",
+    "momentum_20",
+    "reversal_20",
+    "trend_120"
+  ],
+  "gates": {
+    "accuracy": 0.9,
+    "cases": 100,
+    "coverage": 0.1,
+    "wilson_95_lower": 0.8,
+    "block_accuracy": 0.8,
+    "paired_p": 0.05
+  },
+  "formal_run_policy": "Execute exactly once after this manifest and implementation hash are locked. No result-dependent threshold, rule, date, or baseline changes are allowed.",
+  "implementation": {
+    "script": "scripts/research_breadth_transition_episode.py",
+    "sha256": "2F5F71159BF71F2448D5243489D37F303E5EA5B7E5846DC2C979CDB8603248CE"
+  },
+  "promotion_policy": "A variant is promoted only if every absolute, sample, coverage, stability and identical-date strongest-baseline gate passes. Institutional override is additionally considered incremental only when it significantly beats price transition on identical dates."
+}

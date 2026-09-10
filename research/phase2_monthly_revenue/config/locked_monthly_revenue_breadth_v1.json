@@ -1,0 +1,141 @@
+{
+  "experiment": "monthly_revenue_breadth_v1",
+  "status": "locked_before_target_access",
+  "research_isolation": {
+    "workspace": "research/phase2_monthly_revenue",
+    "production_paths_are_read_only": true,
+    "promotion_requires_explicit_user_approval": true
+  },
+  "data_semantics": {
+    "source": "FinMind TaiwanStockMonthRevenue",
+    "source_month_min": "2003-02-01",
+    "source_month_max": "2026-07-01",
+    "availability_rule": "source_date plus 14 calendar days",
+    "availability_lag_days": 14,
+    "aligned_rows": 4744,
+    "aligned_date_min": "2007-02-26",
+    "aligned_date_max": "2026-07-22",
+    "snapshot_contains_target": false
+  },
+  "target": {
+    "definition": "sign(close[t+20] / close[t] - 1)",
+    "horizon_trading_rows": 20,
+    "zero_return_class": -1,
+    "created_only_after_lock": true
+  },
+  "walk_forward": {
+    "history_rows": 1512,
+    "inner_validation_rows": 252,
+    "test_rows": 252,
+    "purge_rows": 20,
+    "effective_case_minimum_spacing_rows": 20,
+    "window_step_rows": 252,
+    "post_hoc_subgroups_allowed": false
+  },
+  "model": {
+    "family": "ridge_linear_direction_with_validation_abstention",
+    "lambdas": [
+      0.1,
+      1.0,
+      10.0,
+      100.0,
+      1000.0
+    ],
+    "confidence_quantiles": [
+      0.0,
+      0.25,
+      0.5,
+      0.65,
+      0.75,
+      0.85
+    ],
+    "minimum_inner_validation_cases": 25,
+    "minimum_inner_validation_coverage": 0.1
+  },
+  "features": {
+    "control": [
+      "ret_5",
+      "ret_20",
+      "ret_60",
+      "ret_120",
+      "ret_240",
+      "vol_ratio",
+      "drawdown_120",
+      "pulse_rate",
+      "inst_foreign_net_20d_z",
+      "inst_trust_net_20d_z",
+      "inst_dealer_net_20d_z"
+    ],
+    "treatment_increment": [
+      "rev_stock_count_z",
+      "rev_log_total_z",
+      "rev_log_median_z",
+      "rev_log_iqr_z",
+      "rev_top10_share_z",
+      "rev_top50_share_z",
+      "rev_hhi_z",
+      "rev_yoy_coverage_z",
+      "rev_yoy_median_z",
+      "rev_yoy_iqr_z",
+      "rev_yoy_positive_z",
+      "rev_yoy_above20_z",
+      "rev_yoy_below_minus20_z",
+      "rev_total_yoy_z",
+      "rev_positive_change3_z",
+      "rev_median_change3_z"
+    ]
+  },
+  "baselines": [
+    "prior_majority",
+    "momentum_20",
+    "reversal_20",
+    "trend_120",
+    "revenue_breadth_sign",
+    "revenue_median_sign",
+    "revenue_total_yoy_sign"
+  ],
+  "gates": {
+    "accuracy": 0.9,
+    "effective_cases": 100,
+    "coverage": 0.1,
+    "wilson_95_lower": 0.8,
+    "minimum_material_window_accuracy": 0.8,
+    "material_window_cases": 10,
+    "must_beat_strongest_simple_baseline": true,
+    "paired_p": 0.05,
+    "treatment_must_significantly_beat_control": true
+  },
+  "formal_run_policy": {
+    "maximum_complete_runs": 1,
+    "interrupted_run_may_resume_deterministically": true,
+    "parameter_changes_after_target_access": false,
+    "post_hoc_subgroups": false
+  },
+  "prelock_unlabeled_audit": {
+    "rows": 4744,
+    "columns": 38,
+    "unique_dates": 4744,
+    "duplicate_dates": 0,
+    "date_monotonic": true,
+    "twii_position_min": 526,
+    "twii_position_max": 5269,
+    "nonunit_trading_row_gaps": 0,
+    "maximum_trading_row_gap": 1,
+    "availability_causal": true,
+    "availability_lag_days_min": 14,
+    "availability_lag_days_max": 14,
+    "nonfinite_cells": 0,
+    "constant_numeric_columns": [],
+    "target_like_columns": []
+  },
+  "hashes": {
+    "research/phase2_monthly_revenue/data/locked_daily_feature_snapshot.csv": "E930921B12C3C0853497CD710487675F2A81272FDF89B5BC010209BBDA64B057",
+    "research/phase2_monthly_revenue/data/monthly_revenue_breadth.csv": "FE0A36E02DFED92AFC8E52B3980F6D52A1A40E5C2D8035DDAEC6D663BF528DAC",
+    "research/phase2_monthly_revenue/reports/monthly_revenue_feasibility.json": "FA65B69CDEEE93193D71DD6017203FF520252E508413CBF5E651252AE928902A",
+    "research/phase2_monthly_revenue/scripts/fetch_finmind_monthly_revenue_breadth.py": "63507D070602701608E959E9270C46D78A42BC3C55563D6C414B321A3927D261",
+    "research/phase2_monthly_revenue/scripts/audit_monthly_revenue_feasibility.py": "9AC4EE7725DBCA05ED62EDD38EEC7FA6B13C14FCF24E25FF56CDFE2D3D9883F3",
+    "research/phase2_monthly_revenue/scripts/build_locked_snapshot.py": "8F694BD02F0901A89C24A0C9E8C6BF58F80D2C9B44463E36BC73D96D6A6BEF28",
+    "research/phase2_monthly_revenue/scripts/run_locked_revenue_research.py": "96217F2D73419211C859AFFC2193FED9CC3BC3C6BEC8573312AA4AC7AED4DB63",
+    "research/phase2_monthly_revenue/scripts/audit_locked_revenue_research.py": "C0083557CDF5C6BD051691770A58305F1AB84357382D9BDAF3F41EA3A4D75EB1"
+  }
+}

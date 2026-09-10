@@ -1,0 +1,45 @@
+{
+  "experiment_id": "orderbook_remaining_risk_v1",
+  "registered_at": "2026-07-23T16:40:00+08:00",
+  "status": "pre-registered before formal result execution",
+  "hypothesis": "Market-wide order and trade pressure through 09:15 adds remaining-day material-move risk beyond the observed TAIEX price path.",
+  "target": {
+    "definition": "absolute TWII 09:15-to-close return exceeds the shifted prior-252-session 75th percentile",
+    "rolling_window": 252,
+    "minimum_history": 126,
+    "quantile": 0.75,
+    "threshold_shift": 1,
+    "decision_time": "09:15:00 Asia/Taipei"
+  },
+  "control": "All locked taiex_early_pulse_close_v1 price-path and open-known features",
+  "treatment": "Control plus all locked orderbook_early_pulse_close_v1 order/trade-pressure additions",
+  "simple_baselines": [
+    "always predict normal",
+    "early range exceeds its shifted prior-252-session 75th percentile",
+    "early realized volatility exceeds its shifted prior-252-session 75th percentile",
+    "absolute opening gap exceeds its shifted prior-252-session 75th percentile",
+    "09:15 deal volume exceeds its shifted prior-252-session 75th percentile"
+  ],
+  "walk_forward": {
+    "history": 756,
+    "inner_validation": 126,
+    "test_block": 126,
+    "lambdas": [0.1, 1.0, 10.0, 100.0],
+    "abstention_quantiles": [0.0, 0.25, 0.5, 0.65, 0.75, 0.85]
+  },
+  "gate": {
+    "minimum_accuracy": 0.9,
+    "minimum_cases": 100,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "maximum_exact_mcnemar_p": 0.05,
+    "must_beat_strongest_simple_baseline": true,
+    "must_show_significant_increment_over_price_path_control": true
+  },
+  "implementation": {
+    "scripts/research_orderbook_remaining_risk.py": "BC484D70333C7381E9735B0AD7A4F9602F640D6093CDA03535112A3774A04D3A",
+    "scripts/research_orderbook_early_pulse_close.py": "F21BFCD08A800614503491590497CC4BCA998E5811FF1745530B30DB67904410",
+    "scripts/research_taiex_early_pulse_close.py": "AD5412E8501DA3B5E825192E9CA139037ACB8BBDCAD5EDEB71DDF99D4C06C206"
+  }
+}

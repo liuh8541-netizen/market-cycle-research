@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0",
+  "generated_date": "2026-07-24",
+  "purpose": "machine-readable guidance for downstream forecasting, trading, risk, and reporting programs",
+  "validated_models": [
+    {
+      "model_id": "canonical_night_spread_gap_v1",
+      "target": "same_day_cash_open_vs_prior_cash_close",
+      "scope": "cash_open_only",
+      "metric": "accuracy",
+      "value": 0.9738,
+      "allowed_output": "direction",
+      "prohibited_uses": [
+        "cash_close_direction",
+        "intraday_continuation",
+        "multi_day_direction"
+      ]
+    },
+    {
+      "model_id": "daily_night_gap_amplitude_v1",
+      "target": "absolute_opening_gap_above_causal_prior_history_q75",
+      "scope": "opening_gap_amplitude_risk_only",
+      "metric": "accuracy",
+      "value": 0.9266,
+      "allowed_output": "risk_class",
+      "prohibited_uses": [
+        "direction",
+        "cash_close_direction",
+        "multi_day_direction"
+      ]
+    }
+  ],
+  "research_only_findings": [
+    {
+      "model_id": "orderbook_remaining_risk_v1",
+      "target": "0915_to_close_material_move_risk",
+      "accuracy": 0.7821,
+      "status": "failed_formal_gate",
+      "allowed_use": "auxiliary_risk_control_only",
+      "formal_signal_allowed": false
+    }
+  ],
+  "rejected_factors": [
+    {
+      "experiment_id": "monthly_revenue_breadth_v1",
+      "cases": 81,
+      "accuracy": 0.5556,
+      "strongest_baseline": 0.6173,
+      "decision": "do_not_integrate"
+    },
+    {
+      "experiment_id": "credit_short_inventory_v1",
+      "cases": 67,
+      "accuracy": 0.5522,
+      "strongest_baseline": 0.6418,
+      "decision": "do_not_integrate"
+    },
+    {
+      "experiment_id": "market_absorption_geometry_v1",
+      "cases": 96,
+      "accuracy": 0.5313,
+      "strongest_baseline": 0.5938,
+      "decision": "do_not_integrate"
+    }
+  ],
+  "validation_gates": {
+    "minimum_oos_accuracy": 0.9,
+    "minimum_nonoverlapping_cases": 100,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "minimum_important_segment_accuracy": 0.8,
+    "must_significantly_beat_strong_baseline": true,
+    "must_add_significant_value_over_control": true,
+    "strict_causal_time_order": true,
+    "purge_required": true,
+    "nonoverlap_required": true
+  },
+  "required_input_fields": [
+    "source_date",
+    "available_at",
+    "decision_date",
+    "is_complete",
+    "dataset_version",
+    "data_sha256"
+  ],
+  "output_contract_rules": [
+    {
+      "condition": "validated == false",
+      "requirement": "formal_signal == null"
+    },
+    {
+      "condition": "enabled == false",
+      "requirement": "downstream UI must not infer a directional signal"
+    },
+    {
+      "condition": "signal_class == research",
+      "requirement": "display as research observation"
+    },
+    {
+      "condition": "model scope is amplitude risk",
+      "requirement": "directional output is prohibited"
+    },
+    {
+      "condition": "requested target differs from model target",
+      "requirement": "reject signal generation"
+    }
+  ],
+  "time_semantics": {
+    "taipei_night_session_completion_time": "05:00",
+    "reject_incomplete_session": true,
+    "use_previous_actual_trading_session_for_monday": true,
+    "reject_wrong_contract": true,
+    "lag_delayed_publications_to_first_available_decision": true
+  },
+  "experiment_governance": {
+    "one_formal_confirmation_per_locked_experiment": true,
+    "immutable_config_required": true,
+    "immutable_snapshot_hash_required": true,
+    "formal_run_receipt_required": true,
+    "independent_audit_required": true,
+    "failed_experiment_registry_required": true,
+    "post_result_threshold_tuning_prohibited": true,
+    "post_result_subgroup_selection_prohibited": true
+  },
+  "production_policy": {
+    "broad_multi_day_direction_enabled": false,
+    "unvalidated_formal_signal": null,
+    "separate_direction_and_risk_models": true
+  },
+  "evidence": [
+    "research/FINAL_VERIFICATION_2026-07-24.md",
+    "research/CYCLE_CLOSEOUT_2026-07-24.md",
+    "research/STOP_POLICY.md",
+    "research/ONLINE_HISTORY_PROTOCOL.md",
+    "research/phase3_market_absorption_geometry/reports/research_conclusion.md"
+  ]
+}

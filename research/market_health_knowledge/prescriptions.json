@@ -1,0 +1,76 @@
+[
+  {
+    "prescription_id": "twii_daily_deterioration_low_confidence_reduce_light_v1",
+    "scope": {
+      "market": "TWII",
+      "timeframe": "daily",
+      "diagnosis": [
+        "deteriorating",
+        "deterioration_watch"
+      ],
+      "confidence": [
+        "low",
+        "medium_low"
+      ]
+    },
+    "action": "reduce_risk",
+    "intensity": "light",
+    "contraindications": [
+      "incomplete_or_stale_data",
+      "night_session_incomplete"
+    ],
+    "expected_benefit": "限制惡化期間的曝險傷害。",
+    "possible_cost": "可能錯過快速反彈。",
+    "validation_status": "safety_policy"
+  },
+  {
+    "prescription_id": "twii_daily_observation_required_v1",
+    "scope": {
+      "market": "TWII",
+      "timeframe": "daily",
+      "diagnosis": [
+        "observation_required",
+        "conflicting_market_state",
+        "indeterminate"
+      ],
+      "confidence": [
+        "low",
+        "medium_low",
+        "medium",
+        "high"
+      ]
+    },
+    "action": "observe_and_recheck",
+    "intensity": "none",
+    "contraindications": [],
+    "expected_benefit": "避免資料不足或病因不明時誤診開藥。",
+    "possible_cost": "延後參與市場。",
+    "validation_status": "safety_policy"
+  },
+  {
+    "prescription_id": "twii_daily_repair_observation_v1",
+    "scope": {
+      "market": "TWII",
+      "timeframe": "daily",
+      "diagnosis": [
+        "recovering",
+        "repair_watch"
+      ],
+      "confidence": [
+        "low",
+        "medium_low",
+        "medium",
+        "high"
+      ]
+    },
+    "action": "observe_repair_without_directional_authority",
+    "intensity": "none",
+    "contraindications": [
+      "bearish_price_damage",
+      "failed_recovery"
+    ],
+    "expected_benefit": "未通過方向驗證前避免把修復觀察誤當進場授權。",
+    "possible_cost": "可能錯過修復初段。",
+    "validation_status": "safety_policy"
+  }
+]

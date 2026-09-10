@@ -1,0 +1,101 @@
+{
+  "passed": false,
+  "research_completed": true,
+  "research_outcome": "main_multi_day_direction_target_not_met",
+  "production_multi_day_direction_enabled": false,
+  "closeout_report": "reports/final_research_conclusion.md",
+  "required_accuracy": 0.9,
+  "required_cases": 100,
+  "required_coverage": 0.1,
+  "required_wilson_lower": 0.8,
+  "best_formal_result": {
+    "method": "three_layer_purged_ridge",
+    "horizon_days": 120,
+    "accuracy": 0.6617794068643785,
+    "cases": 3001,
+    "coverage": 0.5670823885109599,
+    "baseline": 0.6842403628117913,
+    "nonoverlap_cases": 37,
+    "nonoverlap_accuracy": 0.6486486486486487,
+    "note": "Corrected rerun after preserving FinMind cash-institution investor splits."
+  },
+  "message": "Research model has not reached the practical validation gate. Forecast probabilities are exploratory and must not be interpreted as validated confidence.",
+  "audit_report": "reports/validation_leakage_audit.md",
+  "ledger": "reports/research_ledger.md",
+  "updated_at": "2026-07-24"
+  ,
+  "disabled_directional_factors": {
+    "taiwan_futures_night_for_cash_close_and_macro_cycle": "Night data remains excluded from cash-close and multi-day directional coefficients. After correcting legacy signal_date mapping, it is separately validated only for same-day opening-gap direction.",
+    "finmind_multi_day_directional_coefficients": "Cash-institution, margin, futures-institution and option directional factors failed the purged walk-forward gate. Formal chip_score, derivative_score and non_price_score are zero; old heuristic scores are retained for display-only diagnostics. See config/finmind_directional_policy.json."
+  },
+  "locked_candidates": {
+    "open_gap_acceptance_q85_v1": {
+      "status": "posthoc_hypothesis_requires_prospective_confirmation",
+      "scope": "at cash open, same-day close versus prior close",
+      "historical_posthoc_accuracy": 0.9381818181818182,
+      "historical_cases": 275,
+      "historical_coverage": 0.1984126984126984,
+      "night_spread_accuracy_on_identical_dates": 0.9127272727272727,
+      "paired_mcnemar_p": 0.09228515625,
+      "manifest": "config/prospective_open_gap_cash_close_candidate.json",
+      "prospective_status_report": "reports/prospective_open_gap_cash_close_status.md"
+    },
+    "afterhours_pulse_complexion_gap_v1": {
+      "status": "retired_after_date_semantics_correction_and_strong_baseline_audit",
+      "historical_accuracy": 0.9672131147540983,
+      "historical_cases": 122,
+      "prospective_status_report": "reports/locked_afterhours_candidate_status.md"
+    },
+    "nonlinear_premarket_state_gap_v2": {
+      "status": "retired_dominated_by_simple_night_baseline",
+      "historical_accuracy": 0.9181286549707602,
+      "historical_cases": 171,
+      "historical_external_baseline_accuracy": 0.9122807017543859,
+      "historical_paired_mcnemar_p": 1.0,
+      "prospective_status_report": "reports/locked_nonlinear_candidate_status.md"
+    }
+  },
+  "validated_submodels": {
+    "canonical_night_spread_gap_v1": {
+      "scope": "same-day TWII cash open versus prior cash close only",
+      "accuracy": 0.9738372093023255,
+      "cases": 344,
+      "coverage": 0.2481962481962482,
+      "wilson_95_lower": 0.9510327713011291,
+      "external_majority_accuracy_on_identical_dates": 0.9156976744186046,
+      "external_mcnemar_p": 3.5881996154785156e-5,
+      "night_return_accuracy_on_identical_dates": 0.9680232558139535,
+      "night_return_edge": 0.005813953488371992,
+      "night_return_edge_significant": false,
+      "report": "reports/simple_night_gap_baseline_audit.md",
+      "prospective_status_report": "reports/locked_night_spread_gap_status.md"
+    },
+    "daily_night_gap_amplitude_v1": {
+      "scope": "before TWII cash open, classify whether absolute opening gap exceeds the frozen prior-history 75th percentile; not a direction forecast",
+      "accuracy": 0.9266409266409267,
+      "cases": 259,
+      "coverage": 0.3425925925925926,
+      "wilson_95_lower": 0.8882748525827935,
+      "minimum_material_window_accuracy": 0.8421052631578947,
+      "absolute_night_spread_baseline_accuracy": 0.8957528957528957,
+      "model_only": 8,
+      "baseline_only": 0,
+      "paired_mcnemar_p": 0.0078125,
+      "microstructure_increment_supported": false,
+      "report": "reports/microstructure_gap_amplitude.md",
+      "warning": "Validated for material opening-gap amplitude risk only. It must not change the canonical night-spread direction."
+    }
+  },
+  "latest_exploratory_audit": {
+    "hypothesis": "FinMind after-hours institutional candidates add opening-gap direction beyond corrected night price",
+    "decision": "not_supported",
+    "scope": "before TWII cash open, predict opening gap; exact-date paired audit of every retained after-hours candidate",
+    "results": {
+      "pulse_complexion": {"accuracy": 0.9637681159420289, "cases": 138, "night_spread_accuracy": 0.9710144927536232, "model_only": 0, "baseline_only": 1, "mcnemar_exact_p": 1.0},
+      "amount_pulse_only": {"accuracy": 0.9573170731707317, "cases": 164, "night_spread_accuracy": 0.9573170731707317, "model_only": 0, "baseline_only": 0, "mcnemar_exact_p": 1.0},
+      "amount_external_only": {"accuracy": 0.9349593495934959, "cases": 123, "night_spread_accuracy": 0.967479674796748, "model_only": 1, "baseline_only": 5, "mcnemar_exact_p": 0.21875},
+      "amount_combined": {"accuracy": 0.9627329192546584, "cases": 161, "night_spread_accuracy": 0.9627329192546584, "model_only": 0, "baseline_only": 0, "mcnemar_exact_p": 1.0}
+    },
+    "report": "reports/afterhours_night_strong_baseline_audit.md"
+  }
+}

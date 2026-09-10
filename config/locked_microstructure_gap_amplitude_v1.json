@@ -1,0 +1,42 @@
+{
+  "experiment_id": "microstructure_gap_amplitude_v1",
+  "registered_at": "2026-07-23T15:30:00+08:00",
+  "status": "locked_before_first execution",
+  "target": "absolute TWII opening gap exceeds the frozen prior-history 75th percentile",
+  "decision_time": "after completed TX night session and before TWII cash open",
+  "hypothesis": "The completed 15-minute TX path adds material-gap risk information beyond daily night OHLCV and absolute night spread.",
+  "event_quantile": 0.75,
+  "variants": {
+    "daily_amplitude_control": "daily night spread, return, range and volume",
+    "daily_plus_microstructure": "daily control plus 13 completed-session path features"
+  },
+  "model": {
+    "family": "ridge binary event score",
+    "history_days": 756,
+    "fit_days": 630,
+    "validation_days": 126,
+    "frozen_test_days": 126,
+    "ridge_lambdas": [0.1, 1.0, 10.0, 100.0],
+    "abstention_quantiles": [0.0, 0.25, 0.5, 0.65, 0.75, 0.85]
+  },
+  "strong_baselines": [
+    "always predict non-material gap on identical selected dates",
+    "absolute night spread exceeds its frozen prior-history 75th percentile",
+    "daily amplitude control on common selected dates"
+  ],
+  "promotion_gate": {
+    "minimum_accuracy": 0.9,
+    "minimum_cases": 100,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "maximum_paired_mcnemar_p": 0.05,
+    "require_superiority_over_scalar_baseline": true,
+    "require_significant_path_increment_over_daily_control": true
+  },
+  "implementation": {
+    "scripts/research_microstructure_gap_amplitude.py": "54815B7301E632F0CEBC03F2434EE59B5D35F25C750750F9A50475CFB2BAAEFD",
+    "scripts/research_night_microstructure_gap.py": "3BFF1E2C0B3E9422F4164AEDB64BE920685F743C99E7AA538CA7995970C51470"
+  },
+  "amendment_policy": "Any later code, feature, hyperparameter or gate change creates a new experiment id and cannot alter v1 conclusions."
+}

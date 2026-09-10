@@ -1,0 +1,170 @@
+{
+  "experiment": "market_absorption_geometry_v1",
+  "status": "locked_before_target_access",
+  "purpose": "Test whether unresolved cross-sectional absorption/amplification geometry adds reliable 20-trading-day TWII directional information beyond a strong price-only control.",
+  "research_isolation": {
+    "workspace": "research/phase3_market_absorption_geometry",
+    "production_paths_are_read_only": true,
+    "promotion_requires_explicit_user_approval": true,
+    "factor_family_formal_confirmation_tests": 1
+  },
+  "data_semantics": {
+    "source": "FinMind TaiwanStockPrice",
+    "source_update_time": "17:30 Asia/Taipei on trading days",
+    "information_date_min": "1998-06-29",
+    "information_date_max": "2026-07-22",
+    "decision_date_min": "1998-06-30",
+    "decision_date_max": "2026-07-23",
+    "availability_rule": "completed information-date cross-section may first be used on the next actual TWII cash session",
+    "target_anchor_rule": "information-date TWII cash close is the return anchor for the next-session decision",
+    "snapshot_rows": 6876,
+    "snapshot_columns": 51,
+    "snapshot_contains_target": false,
+    "geometry_transform": "252 information rows, minimum 126, prior-window mean and population standard deviation shifted one row"
+  },
+  "target": {
+    "definition": "sign(close[information_row+20] / close[information_row] - 1)",
+    "horizon_trading_rows": 20,
+    "zero_return_class": -1,
+    "created_only_after_lock": true
+  },
+  "walk_forward": {
+    "confirmation_start": "2014-01-01",
+    "confirmation_end": "2025-12-31",
+    "history_rows": 1512,
+    "inner_validation_rows": 252,
+    "test_rows": 252,
+    "purge_rows": 20,
+    "effective_case_minimum_spacing_rows": 20,
+    "window_step_rows": 252,
+    "post_hoc_subgroups_allowed": false
+  },
+  "model": {
+    "family": "ridge_linear_direction_with_nested_validation_abstention",
+    "lambdas": [
+      0.1,
+      1.0,
+      10.0,
+      100.0,
+      1000.0
+    ],
+    "confidence_quantiles": [
+      0.0,
+      0.25,
+      0.5,
+      0.65,
+      0.75,
+      0.85
+    ],
+    "minimum_inner_validation_cases": 25,
+    "minimum_inner_validation_coverage": 0.1,
+    "variant_selection_after_confirmation_labels": false
+  },
+  "features": {
+    "control": [
+      "ret_5",
+      "ret_20",
+      "ret_60",
+      "ret_120",
+      "ret_240",
+      "realized_vol_20",
+      "vol_ratio_20_120",
+      "drawdown_120"
+    ],
+    "treatment_increment": [
+      "mag_zero_range_fraction_z",
+      "mag_return_up_fraction_z",
+      "mag_return_down_fraction_z",
+      "mag_return_flat_fraction_z",
+      "mag_return_sign_entropy_z",
+      "mag_return_direction_synchronization_z",
+      "mag_close_location_mean_z",
+      "mag_close_location_median_z",
+      "mag_close_location_dispersion_z",
+      "mag_close_location_money_weighted_z",
+      "mag_low_close_fraction_z",
+      "mag_high_close_fraction_z",
+      "mag_low_close_money_fraction_z",
+      "mag_high_close_money_fraction_z",
+      "mag_down_but_recovered_fraction_z",
+      "mag_up_but_faded_fraction_z",
+      "mag_down_but_recovered_money_fraction_z",
+      "mag_up_but_faded_money_fraction_z",
+      "mag_path_efficiency_median_z",
+      "mag_path_efficiency_q75_z",
+      "mag_one_way_path_fraction_z",
+      "mag_churn_path_fraction_z",
+      "mag_signed_efficiency_median_z",
+      "mag_signed_efficiency_money_weighted_z",
+      "mag_range_median_z",
+      "mag_range_dispersion_z",
+      "mag_range_q90_z",
+      "mag_upper_excursion_q90_z",
+      "mag_lower_excursion_q90_z",
+      "mag_excursion_tail_asymmetry_z",
+      "mag_negative_return_money_fraction_z",
+      "mag_positive_return_money_fraction_z"
+    ]
+  },
+  "baselines": [
+    "prior_majority",
+    "momentum_20",
+    "reversal_20",
+    "trend_120",
+    "breadth_sign",
+    "close_location_sign",
+    "signed_efficiency_sign",
+    "absorption_balance_sign"
+  ],
+  "gates": {
+    "accuracy": 0.9,
+    "effective_cases": 100,
+    "coverage": 0.1,
+    "wilson_95_lower": 0.8,
+    "minimum_material_window_accuracy": 0.8,
+    "material_window_cases": 10,
+    "must_beat_strongest_simple_baseline": true,
+    "paired_p": 0.05,
+    "treatment_must_significantly_beat_control": true
+  },
+  "formal_run_policy": {
+    "maximum_complete_runs": 1,
+    "interrupted_run_may_resume_deterministically": true,
+    "parameter_changes_after_target_access": false,
+    "post_hoc_subgroups": false,
+    "close_current_factor_evidence_after_independent_audit": true
+  },
+  "prelock_unlabeled_audit": {
+    "source_expected_dates": 7120,
+    "source_terminal_dates": 7120,
+    "source_successful_dates": 7117,
+    "source_excluded_dates": 3,
+    "source_failed_dates": 0,
+    "snapshot_rows": 6876,
+    "snapshot_columns": 51,
+    "unique_information_dates": 6876,
+    "unique_decision_dates": 6876,
+    "duplicate_dates": 0,
+    "decision_after_information": true,
+    "nonfinite_cells": 0,
+    "constant_model_eligible_columns": [],
+    "target_like_columns": [],
+    "confirmation_rows": 2919,
+    "maximum_effective_nonoverlap_opportunities": 146,
+    "conservative_feasibility_case_count": 144
+  },
+  "hashes": {
+    "research/phase3_market_absorption_geometry/data/locked_daily_feature_snapshot.csv": "434A7F41F917CEA7BECB0DFB077317EF4CA9DD1E1B8FFFF9DEB5CCB1B17FFAE6",
+    "research/phase3_market_absorption_geometry/data/market_absorption_geometry.csv": "4015EDECBE8D904320F9EC133E1D0E785BD366907769CBBD0878ECDCC52124F6",
+    "research/phase3_market_absorption_geometry/data/market_absorption_geometry_fetched_dates.csv": "76FEEE2CE33A44DCAE75C92B784F8D6FBABA8F8E4BB9D3A710664D7AB8AD613F",
+    "research/phase3_market_absorption_geometry/reports/market_absorption_geometry_feasibility.json": "905C56584EFD637B87BC2AE50069B93F9C536AF0E13F49E90C9CE052E755B725",
+    "research/phase3_market_absorption_geometry/scripts/fetch_market_absorption_geometry.py": "24D87ECCFB80155159934A4225B401F9DE58016E48B41B767C7AA8C829ABBB3C",
+    "research/phase3_market_absorption_geometry/scripts/audit_absorption_feasibility.py": "FF085CF8BF87416E9D20F2A9830EC574DB4008C950B7C1BC716A5392B1776395",
+    "research/phase3_market_absorption_geometry/scripts/build_locked_snapshot.py": "7367040057D91DE08050E13C0F2E346B1FE617B86737782D9E2C3833CE182403",
+    "research/phase3_market_absorption_geometry/scripts/run_locked_absorption_research.py": "F662E305814F5CF55D2B9B825A7555A51ED890CBA5D25C919866F973188F33D7",
+    "research/phase3_market_absorption_geometry/scripts/audit_locked_absorption_research.py": "181FC1E410ACD7C36C56391E299446AFEBCFAC2B34DF2D02693908E91A419FE3",
+    "research/phase2_monthly_revenue/scripts/run_locked_revenue_research.py": "96217F2D73419211C859AFFC2193FED9CC3BC3C6BEC8573312AA4AC7AED4DB63",
+    "research/STOP_POLICY.md": "504FB2423ECA6F29F138EDF9DEE82BDFB00EEB4E333BBE66D93C021D4C44FF6D",
+    "research/ONLINE_HISTORY_PROTOCOL.md": "0FE8EF78A7A969E3F2F9EE4AB26D218FCF140886880C537CEB87CCD89D2EFD55"
+  }
+}

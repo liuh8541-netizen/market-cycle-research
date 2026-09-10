@@ -1,0 +1,80 @@
+[
+  {
+    "name": "institutional_total",
+    "dataset": "TaiwanStockTotalInstitutionalInvestors",
+    "output": "data/processed/factors/institutional_total.csv",
+    "category": "chip"
+  },
+  {
+    "name": "margin_total",
+    "dataset": "TaiwanStockTotalMarginPurchaseShortSale",
+    "output": "data/processed/factors/margin_total.csv",
+    "category": "chip"
+  },
+  {
+    "name": "futures_daily",
+    "dataset": "TaiwanFuturesDaily",
+    "data_id": "TX",
+    "output": "data/processed/factors/futures_daily.csv",
+    "category": "derivative"
+  },
+  {
+    "name": "futures_institutional",
+    "dataset": "TaiwanFuturesInstitutionalInvestors",
+    "data_id": "TX",
+    "output": "data/processed/factors/futures_institutional.csv",
+    "category": "derivative"
+  },
+  {
+    "name": "option_daily",
+    "dataset": "TaiwanOptionDaily",
+    "data_id": "TXO",
+    "start_date": "2018-01-01",
+    "chunk_days": 31,
+    "output": "data/processed/factors/option_daily.csv",
+    "category": "derivative"
+  },
+  {
+    "name": "option_institutional",
+    "dataset": "TaiwanOptionInstitutionalInvestors",
+    "data_id": "TXO",
+    "start_date": "2018-01-01",
+    "chunk_days": 366,
+    "output": "data/processed/factors/option_institutional.csv",
+    "category": "derivative"
+  },
+  {
+    "name": "option_vix",
+    "dataset": "TaiwanOptionVix",
+    "start_date": "2018-01-01",
+    "chunk_days": 366,
+    "output": "data/processed/factors/option_vix.csv",
+    "category": "derivative"
+  },
+  {
+    "name": "business_indicator",
+    "dataset": "TaiwanBusinessIndicator",
+    "start_date": "1982-01-01",
+    "chunk_days": 3653,
+    "output": "data/processed/factors/business_indicator.csv",
+    "category": "constitution"
+  },
+  {
+    "name": "futures_institutional_after_hours",
+    "dataset": "TaiwanFuturesInstitutionalInvestorsAfterHours",
+    "data_id": "TX",
+    "start_date": "2021-10-12",
+    "chunk_days": 366,
+    "output": "data/processed/factors/futures_institutional_after_hours.csv",
+    "category": "premarket"
+  },
+  {
+    "name": "option_institutional_after_hours",
+    "dataset": "TaiwanOptionInstitutionalInvestorsAfterHours",
+    "data_id": "TXO",
+    "start_date": "2021-10-12",
+    "chunk_days": 366,
+    "output": "data/processed/factors/option_institutional_after_hours.csv",
+    "category": "premarket"
+  }
+]

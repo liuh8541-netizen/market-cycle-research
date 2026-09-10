@@ -1,0 +1,155 @@
+{
+  "experiment": "credit_short_inventory_v1",
+  "status": "locked_before_target_access",
+  "purpose": "Test whether the previously unmeasured all-market credit short inventory and flow structure adds reliable 20-trading-day directional information.",
+  "research_isolation": {
+    "workspace": "research/phase2_credit_short_inventory",
+    "production_paths_are_read_only": true,
+    "promotion_requires_explicit_user_approval": true,
+    "factor_family_formal_confirmation_tests": 1
+  },
+  "data_semantics": {
+    "source": "FinMind TaiwanDailyShortSaleBalances",
+    "official_documentation": "https://finmind.github.io/en/tutor/TaiwanMarket/Chip/",
+    "official_source_range_start": "2005-07-01",
+    "source_update_time": "21:00 Asia/Taipei on trading days",
+    "information_date_min": "2005-12-30",
+    "information_date_max": "2026-07-22",
+    "decision_date_min": "2006-01-02",
+    "decision_date_max": "2026-07-23",
+    "availability_rule": "source-date data may first be used on the next actual cash trading session",
+    "target_anchor_rule": "the known information-date cash close is the return anchor for a decision issued the next trading morning",
+    "aligned_rows": 5024,
+    "snapshot_contains_target": false,
+    "rolling_transform": "252 source rows, minimum 126, prior-window mean and population standard deviation shifted one row"
+  },
+  "target": {
+    "definition": "sign(close[information_row+20] / close[information_row] - 1)",
+    "horizon_trading_rows": 20,
+    "zero_return_class": -1,
+    "created_only_after_lock": true
+  },
+  "walk_forward": {
+    "history_rows": 1512,
+    "inner_validation_rows": 252,
+    "test_rows": 252,
+    "purge_rows": 20,
+    "effective_case_minimum_spacing_rows": 20,
+    "window_step_rows": 252,
+    "post_hoc_subgroups_allowed": false
+  },
+  "model": {
+    "family": "ridge_linear_direction_with_nested_validation_abstention",
+    "lambdas": [
+      0.1,
+      1.0,
+      10.0,
+      100.0,
+      1000.0
+    ],
+    "confidence_quantiles": [
+      0.0,
+      0.25,
+      0.5,
+      0.65,
+      0.75,
+      0.85
+    ],
+    "minimum_inner_validation_cases": 25,
+    "minimum_inner_validation_coverage": 0.1
+  },
+  "features": {
+    "control": [
+      "ret_5",
+      "ret_20",
+      "ret_60",
+      "ret_120",
+      "ret_240",
+      "vol_ratio",
+      "drawdown_120",
+      "pulse_rate",
+      "inst_foreign_net_20d_z",
+      "inst_trust_net_20d_z",
+      "inst_dealer_net_20d_z"
+    ],
+    "treatment_increment": [
+      "cs_log_combined_balance_z",
+      "cs_log_margin_balance_z",
+      "cs_log_sbl_balance_z",
+      "cs_margin_balance_share_z",
+      "cs_combined_balance_change_rate_z",
+      "cs_margin_increase_breadth_z",
+      "cs_sbl_increase_breadth_z",
+      "cs_margin_new_short_rate_z",
+      "cs_margin_cover_rate_z",
+      "cs_sbl_new_short_rate_z",
+      "cs_sbl_return_rate_z",
+      "cs_positive_balance_breadth_z",
+      "cs_top10_share_z",
+      "cs_top50_share_z",
+      "cs_hhi_z",
+      "cs_log_iqr_z"
+    ]
+  },
+  "baselines": [
+    "prior_majority",
+    "momentum_20",
+    "reversal_20",
+    "trend_120",
+    "short_build_bearish",
+    "short_build_contrarian",
+    "margin_build_bearish",
+    "sbl_build_bearish"
+  ],
+  "gates": {
+    "accuracy": 0.9,
+    "effective_cases": 100,
+    "coverage": 0.1,
+    "wilson_95_lower": 0.8,
+    "minimum_material_window_accuracy": 0.8,
+    "material_window_cases": 10,
+    "must_beat_strongest_simple_baseline": true,
+    "paired_p": 0.05,
+    "treatment_must_significantly_beat_control": true
+  },
+  "formal_run_policy": {
+    "maximum_complete_runs": 1,
+    "interrupted_run_may_resume_deterministically": true,
+    "parameter_changes_after_target_access": false,
+    "post_hoc_subgroups": false,
+    "close_current_evidence_cycle_after_independent_audit": true
+  },
+  "prelock_unlabeled_audit": {
+    "source_expected_dates": 5151,
+    "source_successful_dates": 5151,
+    "source_failed_dates": 0,
+    "snapshot_rows": 5024,
+    "snapshot_columns": 38,
+    "unique_information_dates": 5024,
+    "unique_decision_dates": 5024,
+    "duplicate_dates": 0,
+    "date_monotonic": true,
+    "decision_after_information": true,
+    "nonunit_trading_row_gaps": 0,
+    "maximum_trading_row_gap": 1,
+    "nonfinite_cells": 0,
+    "constant_numeric_columns": [],
+    "target_like_columns": [],
+    "formal_test_windows": 13,
+    "maximum_effective_opportunities": 164
+  },
+  "hashes": {
+    "research/phase2_credit_short_inventory/data/locked_daily_feature_snapshot.csv": "8FAB877092AB2FC3DC586348B5FB07464129D6BF745E70C459A8D7C70E24A07E",
+    "research/phase2_credit_short_inventory/data/credit_short_inventory.csv": "4EDA37EB34524F8AE6ECE9711340FE0FECBADC91240085BBB30DAF380E201222",
+    "research/phase2_credit_short_inventory/data/credit_short_inventory_fetched_dates.csv": "6A843232FF5FD5FE2FE8A450CEB178918252A123F1FDFD4AE4109C73297753CC",
+    "research/phase2_credit_short_inventory/reports/credit_short_inventory_feasibility.json": "42026AFC8A7DB1AC47E22222D6FC6D845951DFF40146F33C7668863B92665D90",
+    "research/phase2_credit_short_inventory/scripts/fetch_credit_short_inventory.py": "BCA61082D410DB89616B54DE161DDCF3DB13EB12CC42CBC1392BE1DDBCFC96AA",
+    "research/phase2_credit_short_inventory/scripts/audit_credit_short_feasibility.py": "655D18A8D1F68D1AB9DDD6F6F87E07857294B5B63714B4593A23DAD601187721",
+    "research/phase2_credit_short_inventory/scripts/build_locked_snapshot.py": "E513E74D4B2333CB215B23A80A9E2FF47DFDD63C5249B1BE5FD3A290ABFA181A",
+    "research/phase2_credit_short_inventory/scripts/run_locked_credit_short_research.py": "0D898CA29195F6224D22F7095EF92E3C33DD8C998A0F35A12D28CC84B873F6DB",
+    "research/phase2_credit_short_inventory/scripts/audit_locked_credit_short_research.py": "BB6BBBAC4275A8D4E01073DA22F3390062CDB4330CACD3F136F5412B913B015F",
+    "research/phase2_monthly_revenue/scripts/run_locked_revenue_research.py": "96217F2D73419211C859AFFC2193FED9CC3BC3C6BEC8573312AA4AC7AED4DB63",
+    "research/STOP_POLICY.md": "504FB2423ECA6F29F138EDF9DEE82BDFB00EEB4E333BBE66D93C021D4C44FF6D",
+    "research/ONLINE_HISTORY_PROTOCOL.md": "0FE8EF78A7A969E3F2F9EE4AB26D218FCF140886880C537CEB87CCD89D2EFD55"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "experiment_id": "latent_pulse_constitution_intraday_v1",
+  "registered_at": "2026-07-23T15:10:00+08:00",
+  "status": "locked_before_first_execution",
+  "target": "sign of TWII same-day close versus same-day open",
+  "decision_time": "after the completed TX night session and before the TWII cash open",
+  "causal_policy": {
+    "night_data": "target-date session ending no later than 05:00",
+    "cash_data": "shifted one completed TWII cash session",
+    "finmind_cash_institutional": "shifted one completed TWII cash session",
+    "finmind_margin": "shifted one completed TWII cash session",
+    "normalization": "past-only rolling statistics or training-only statistics"
+  },
+  "variants": {
+    "pulse_control": "completed night aggregate/path plus lagged cash state",
+    "pulse_plus_lagged_constitution": "pulse control plus lagged cash-institution and margin state"
+  },
+  "model": {
+    "family": "ridge linear direction score",
+    "history_days": 756,
+    "fit_days": 630,
+    "validation_days": 126,
+    "frozen_test_days": 126,
+    "ridge_lambdas": [0.1, 1.0, 10.0, 100.0],
+    "abstention_quantiles": [0.0, 0.25, 0.5, 0.65, 0.75, 0.85],
+    "missing_value_policy": "training-only median",
+    "scaling_policy": "training-only mean and standard deviation"
+  },
+  "strong_baselines": [
+    "always up on identical selected dates",
+    "completed night-spread sign on identical selected dates",
+    "prior completed cash intraday sign on identical selected dates",
+    "pulse-only control on common selected dates"
+  ],
+  "promotion_gate": {
+    "minimum_accuracy": 0.9,
+    "minimum_cases": 100,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "require_positive_model_only_minus_baseline_only": true,
+    "maximum_paired_mcnemar_p": 0.05,
+    "require_significant_constitution_increment_over_pulse_control": true
+  },
+  "implementation": {
+    "script": "scripts/research_latent_pulse_constitution_intraday.py",
+    "sha256_at_registration": "3E829A7F7A5B5DFF425B5C6076EFB7BD69E88A684AA19601A93717C8AA96FAEC"
+  },
+  "amendment_policy": "Any later code, feature, hyperparameter or gate change creates a new experiment id and cannot alter v1 conclusions."
+}

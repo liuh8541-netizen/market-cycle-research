@@ -1,0 +1,81 @@
+{
+  "experiment_id": "tx_night_microstructure_gap_v1",
+  "registered_at": "2026-07-23T11:13:58+08:00",
+  "status": "locked_before_historical_backfill_completion",
+  "target": "sign of TWII cash opening gap on D versus completed TWII close immediately before D",
+  "decision_time": "after the TX night session is complete and before the TWII cash open on D",
+  "causal_window": "prior TWII cash trading date P at 15:00 inclusive through calendar P+1 at 05:00 exclusive",
+  "data_start": "2020-01-01",
+  "historical_cutoff": "2026-07-22",
+  "bar_frequency": "15 minutes",
+  "session_completeness": {
+    "minimum_bars": 12,
+    "first_bar_deadline": "P 15:30",
+    "last_bar_earliest": "P+1 04:30",
+    "contract_rule": "same outright contract_date selected by canonical TaiwanFuturesDaily night row"
+  },
+  "variants": {
+    "daily_aggregate_control": [
+      "tx_night_spread_per",
+      "tx_night_return",
+      "tx_night_range",
+      "log_night_volume"
+    ],
+    "daily_plus_microstructure": [
+      "tx_night_spread_per",
+      "tx_night_return",
+      "tx_night_range",
+      "log_night_volume",
+      "first_hour_return",
+      "last_hour_return",
+      "return_acceleration",
+      "realized_volatility",
+      "trend_efficiency",
+      "up_bar_share",
+      "close_location",
+      "max_drawdown",
+      "max_runup",
+      "first_hour_volume_share",
+      "last_hour_volume_share",
+      "signed_volume_ratio",
+      "log_tick_count"
+    ]
+  },
+  "model": {
+    "family": "ridge linear direction score",
+    "history_days": 756,
+    "fit_days": 630,
+    "validation_days": 126,
+    "frozen_test_days": 126,
+    "ridge_lambdas": [0.1, 1.0, 10.0, 100.0],
+    "abstention_quantiles": [0.0, 0.25, 0.5, 0.65, 0.75, 0.85],
+    "missing_value_policy": "training-only median",
+    "scaling_policy": "training-only mean and standard deviation"
+  },
+  "strong_baselines": [
+    "sign of tx_night_spread_per on identical selected dates",
+    "sign of tx_night_return on identical selected dates",
+    "daily_aggregate_control on common selected dates"
+  ],
+  "promotion_gate": {
+    "minimum_accuracy": 0.9,
+    "minimum_cases": 100,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "require_positive_model_only_minus_baseline_only": true,
+    "maximum_paired_mcnemar_p": 0.05,
+    "require_significant_path_increment_over_daily_control": true
+  },
+  "integrity_gate": {
+    "maximum_ohlc_difference_points": 1,
+    "maximum_causal_violations": 0,
+    "maximum_duplicate_contract_bars": 0,
+    "tick_volume_policy": "relative within-session features only; canonical daily volume remains the level feature"
+  },
+  "implementation": {
+    "script": "scripts/research_night_microstructure_gap.py",
+    "sha256_at_registration": "3BFF1E2C0B3E9422F4164AEDB64BE920685F743C99E7AA538CA7995970C51470"
+  },
+  "amendment_policy": "Any later code, feature, hyperparameter or gate change creates a new experiment id and cannot alter v1 conclusions."
+}

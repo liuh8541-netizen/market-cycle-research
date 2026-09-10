@@ -1,0 +1,56 @@
+{
+  "experiment": "market_valuation_breadth_v1",
+  "locked_at": "2026-07-23",
+  "hypothesis": "The point-in-time cross-sectional distribution of PER, PBR and dividend yield measures internal market valuation constitution and adds stable 20-trading-day TWII direction beyond index trend and aggregate FinMind positioning.",
+  "decision_time": "After date-t cash close and publication of date-t TaiwanStockPER values.",
+  "target": "TWII close direction from date t to 20 actual Taiwan cash-market trading days later.",
+  "data_semantics": {
+    "dataset": "TaiwanStockPER",
+    "daily_rows": 5088,
+    "failed_dates": 0,
+    "earliest_date": "2005-10-03",
+    "latest_date": "2026-07-23",
+    "point_in_time_universe": "Four-digit common stocks present on that source date; no current constituent list.",
+    "per_policy": "Only finite positive PER values enter PER distribution statistics; nonpositive PER remains represented through the valid fraction.",
+    "pbr_policy": "Only finite positive PBR values enter PBR distribution statistics; invalid values remain represented through the valid fraction.",
+    "yield_policy": "Finite nonnegative dividend yields enter yield statistics.",
+    "raw_persistence": "Raw security rows are reduced to one immutable daily aggregate row and are not retained."
+  },
+  "features": [
+    "active stock count",
+    "valid positive PER fraction",
+    "median and IQR of log positive PER",
+    "fractions of positive PER below 10 and above 30",
+    "valid positive PBR fraction",
+    "median and IQR of log positive PBR",
+    "fraction of positive PBR below 1",
+    "valid nonnegative yield fraction",
+    "median dividend yield",
+    "fraction of valid yields at least 4"
+  ],
+  "feature_transform": "Each of the 13 fixed daily aggregates is converted to a causal 252-row rolling z-score with at least 126 contemporaneous/past observations. No future value enters a transform.",
+  "method": "1512/252/252 nested ridge-abstention, 20-row purge at fit/validation boundaries, frozen lambda and confidence threshold for each following test block, and effective origins separated by at least 20 actual TWII rows.",
+  "baselines": [
+    "prior_majority",
+    "momentum_20",
+    "reversal_20",
+    "trend_120"
+  ],
+  "gates": {
+    "accuracy": 0.9,
+    "cases": 100,
+    "coverage": 0.1,
+    "wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "paired_p": 0.05
+  },
+  "formal_run_policy": "Execute exactly once after this manifest. No result-dependent feature, threshold, date, horizon, subgroup or baseline changes are allowed.",
+  "implementation_hashes": {
+    "scripts/research_market_valuation_breadth.py": "4591E33163248010290D5FD1894A16E830BF3054381096408DBEDA290318B2FC",
+    "scripts/research_cross_sectional_breadth_cycle.py": "FEE162D69AF574E05B59BA498E4475FA24DDC75BFA0913F3745A4540815D2ECF",
+    "scripts/fetch_finmind_market_valuation_breadth.py": "ADD50069A104046E3AB48F7BDD0C96EA02CB994B14FCEB1023E78DA91BC312A1",
+    "data/processed/factors/market_valuation_breadth.csv": "04B64446059751653BE5DEE860597523EE15E02BCCCE04B684E2B2EA01C34DD0",
+    "data/processed/factors/market_valuation_fetched_dates.csv": "5E538C28E232D325095BD093683447981FA7F0D1B328571F746F067CF323B7C2"
+  },
+  "promotion_policy": "The valuation treatment must pass every absolute gate, significantly beat the strongest simple baseline on identical dates, and significantly beat the index/aggregate control on common dates. Otherwise every valuation directional coefficient remains zero."
+}

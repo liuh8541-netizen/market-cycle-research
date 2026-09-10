@@ -1,0 +1,52 @@
+# Secrets
+config/.secrets/
+.env
+.env.*
+*.pem
+*.key
+*.p12
+credentials.json
+token.json
+
+# Runtime data and generated outputs
+data/
+reports/*.csv
+reports/*.json
+reports/*.jsonl
+reports/*.html
+reports/*.ndjson
+reports/*.pptx
+reports/*.inspect.*
+reports/automation_logs/
+reports/
+!reports/.gitkeep
+!reports/README.md
+!reports/data_coverage_audit.md
+!reports/market_heart_rhythm_validation.md
+!reports/semantic_psychology_layer_audit.md
+!reports/global_news_risk_impact_audit.md
+!reports/model_reliability_trend_audit.md
+*.db
+*.sqlite
+*.sqlite3
+
+# Research generated ledgers and bulky snapshots
+research/**/reports/
+research/**/reports/*.json
+research/**/reports/*.jsonl
+research/market_health_knowledge/*.jsonl
+
+# Python / local caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.deps/
+
+# Local logs and temporary files
+*.log
+*.tmp
+*.bak
+~$*
+Thumbs.db
+desktop.ini

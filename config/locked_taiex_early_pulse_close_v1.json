@@ -1,0 +1,71 @@
+{
+  "experiment_id": "taiex_early_pulse_close_v1",
+  "registered_at": "2026-07-23T15:45:00+08:00",
+  "status": "pre-registered before historical backfill and formal result execution",
+  "hypothesis": "The first 15-minute TAIEX path adds remaining-day direction beyond the opening gap, TX night direction, and lagged cash state.",
+  "target": {
+    "definition": "sign(TWII cash close / observed TAIEX at 09:15:00 - 1)",
+    "positive_class": "close at or above the 09:15 level",
+    "decision_time": "09:15:00 Asia/Taipei"
+  },
+  "data": {
+    "source": "FinMind TaiwanVariousIndicators5Seconds",
+    "start_date": "2020-01-01",
+    "end_date": "2026-07-23",
+    "cutoff_inclusive": "09:15:00",
+    "one_request_per_calendar_day": true,
+    "minimum_early_observations": 120,
+    "expected_regular_observations": 181
+  },
+  "variants": {
+    "open_control": [
+      "opening_gap",
+      "night_spread",
+      "night_return",
+      "prior_cash_1d",
+      "prior_cash_5d",
+      "prior_cash_20d",
+      "prior_cash_vol20"
+    ],
+    "open_plus_early_pulse_additions": [
+      "early_return",
+      "first5_return",
+      "last5_return",
+      "return_acceleration",
+      "early_range",
+      "realized_volatility",
+      "trend_efficiency",
+      "close_location",
+      "linear_slope_15m",
+      "gap_x_early",
+      "night_x_early"
+    ]
+  },
+  "simple_baselines": [
+    "sign(first_15_minute_return)",
+    "negative_sign(first_15_minute_return)",
+    "sign(opening_gap)",
+    "sign(TX_night_spread)"
+  ],
+  "walk_forward": {
+    "history": 756,
+    "inner_validation": 126,
+    "test_block": 126,
+    "lambdas": [0.1, 1.0, 10.0, 100.0],
+    "abstention_quantiles": [0.0, 0.25, 0.5, 0.65, 0.75, 0.85]
+  },
+  "gate": {
+    "minimum_accuracy": 0.9,
+    "minimum_cases": 100,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "maximum_exact_mcnemar_p": 0.05,
+    "must_beat_strongest_simple_baseline": true,
+    "must_show_significant_increment_over_open_control": true
+  },
+  "implementation": {
+    "scripts/research_taiex_early_pulse_close.py": "AD5412E8501DA3B5E825192E9CA139037ACB8BBDCAD5EDEB71DDF99D4C06C206",
+    "scripts/fetch_finmind_taiex_early_pulse.py": "81A06E21FC7574A6EB5A7F1A05BF9C05E8C1020A71DD54A4B99EAB842870A822"
+  }
+}

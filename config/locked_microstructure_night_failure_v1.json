@@ -1,0 +1,40 @@
+{
+  "experiment_id": "microstructure_night_failure_v1",
+  "registered_at": "2026-07-23T15:20:00+08:00",
+  "status": "locked_before_first_microstructure-feature execution",
+  "target": "sign of TWII same-day close versus prior completed cash close",
+  "decision_time": "after completed TX night session and before TWII cash open",
+  "hypothesis": "A pathological completed 15-minute TX night path identifies when the night-spread direction will fail to transmit to the same-day cash close.",
+  "ablation": {
+    "control": "previous causal reliability, cash-volatility and overseas regime on the microstructure-aligned dates",
+    "treatment": "same control plus 13 fixed completed-session path features"
+  },
+  "model": {
+    "family": "balanced stump failure classifier",
+    "history_days": 756,
+    "fit_days": 630,
+    "validation_days": 126,
+    "frozen_test_days": 126,
+    "rounds": [10, 25, 50],
+    "learning_rates": [0.05, 0.1, 0.2],
+    "confidence_quantiles": [0.0, 0.25, 0.5, 0.65, 0.75, 0.85],
+    "flip_quantiles": [0.0, 0.25, 0.5, 0.75]
+  },
+  "promotion_gate": {
+    "minimum_accuracy": 0.9,
+    "minimum_cases": 100,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "maximum_paired_mcnemar_p": 0.05,
+    "require_superiority_over_night_baseline": true,
+    "require_significant_path_increment_over_regime_control": true
+  },
+  "implementation": {
+    "scripts/research_microstructure_night_failure.py": "A4BE51A2E4434984223DF9CF98A080AF8FC387ECDB4E6A08C42428DC0807D8CF",
+    "scripts/research_night_cash_close_regime_switch.py": "0ADA6CC8BEBC0AC27DB24224C4F8D88BBB8CF81503F5FBE5057F5D3450DD7820",
+    "scripts/research_balanced_external_failure.py": "4DBC2EF5A3B043FEF33D2FDE07B5F6154CBEFB40D9B9DF49575CCDF77B97F146",
+    "scripts/research_long_history_night_external.py": "FDF788FE452EE525BCED4578FB542BBEB5A9CE6323DA6AD8F05048850CB8AAC5"
+  },
+  "amendment_policy": "Any later code, feature, hyperparameter or gate change creates a new experiment id and cannot alter v1 conclusions."
+}

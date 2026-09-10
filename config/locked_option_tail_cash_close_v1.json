@@ -1,0 +1,48 @@
+{
+  "experiment_id": "option_tail_cash_close_v1",
+  "registered_at": "2026-07-23T15:26:00+08:00",
+  "status": "locked during historical option-tail backfill and before first direction execution",
+  "target": "same-day TWII cash close versus prior completed cash close",
+  "decision_time": "after completed TX and TXO night sessions and before TWII cash open",
+  "hypothesis": "TXO night tail pricing adds cash-close direction beyond TX night price and lagged cash state.",
+  "data_policy": {
+    "start_date": "2020-01-01",
+    "session": "after_market only",
+    "expiry_selection": "most actively traded valid contract using completed-session volume",
+    "atm_rule": "strike minimizing absolute call-put settlement/close premium difference",
+    "tail_distances": [0.01, 0.02],
+    "normalization": "past-only rolling statistics or training-only statistics"
+  },
+  "variants": {
+    "night_control": "night spread/return/range/volume plus lagged cash returns and volatility",
+    "night_plus_option_tail": "control plus 1%/2% symmetric tail skew, OTM volume ratio, skew changes and two low-degree interactions"
+  },
+  "model": {
+    "family": "ridge direction score",
+    "history_days": 756,
+    "fit_days": 630,
+    "validation_days": 126,
+    "frozen_test_days": 126,
+    "ridge_lambdas": [0.1, 1.0, 10.0, 100.0],
+    "abstention_quantiles": [0.0, 0.25, 0.5, 0.65, 0.75, 0.85]
+  },
+  "strong_baselines": [
+    "night spread sign on identical selected dates",
+    "night return sign on identical selected dates",
+    "night control on common selected dates"
+  ],
+  "promotion_gate": {
+    "minimum_accuracy": 0.9,
+    "minimum_cases": 100,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "maximum_paired_mcnemar_p": 0.05,
+    "require_significant_option_tail_increment": true
+  },
+  "implementation": {
+    "scripts/research_option_tail_cash_close.py": "FF5D029066FDD1A44562A7B3F7ABD958FB6ED7BFB679A63CEC5DD1A1E13818F0",
+    "scripts/fetch_finmind_option_tail_features.py": "8EF4D295FD54E2FC9087A9F5B9484BADE77B02270E11E494E531C88BC45AC831"
+  },
+  "amendment_policy": "Any later code, feature, hyperparameter or gate change creates a new experiment id and cannot alter v1 conclusions."
+}

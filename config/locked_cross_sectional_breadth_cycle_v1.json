@@ -1,0 +1,82 @@
+{
+  "experiment_id": "cross_sectional_breadth_cycle_v1",
+  "registered_at": "2026-07-23T17:30:00+08:00",
+  "status": "pre-registered before historical breadth backfill and formal result execution",
+  "hypothesis": "Point-in-time participation breadth across individual Taiwan stocks is a market internal-state variable that adds 20-trading-day TWII direction beyond index trend and aggregate FinMind factors.",
+  "target": {
+    "definition": "sign(TWII close[t+20] / TWII close[t] - 1)",
+    "decision_time": "after all date-t cash and institutional source data are available",
+    "effective_sample": "origins separated by at least 20 TWII trading rows"
+  },
+  "data": {
+    "sources": [
+      "FinMind TaiwanStockPrice",
+      "FinMind TaiwanStockInstitutionalInvestorsBuySellWide",
+      "canonical TWII daily"
+    ],
+    "start_date": "2005-01-01",
+    "end_date": "2026-07-23",
+    "point_in_time_universe": "security rows actually returned on each source date whose stock_id matches ^[1-9][0-9]{3}$",
+    "survivorship_rule": "never filter a historical day with the current TaiwanStockInfo list",
+    "minimum_price_stocks_per_source_day": 100,
+    "minimum_institutional_active_stocks_per_source_day": 50,
+    "minimum_feature_date_coverage": 0.9,
+    "feasibility_amendment": "Before any formal backfill result or target validation, probes found 96 institutional rows on 2005-01-06, only 19 on 2008-02-29, and zero rows from both FinMind sources on 2014-07-23 while canonical TWII duplicated the prior day's full OHLCV. The originally shared 100-stock threshold was split into price 100 and institutional 50; dates below 50 institutional active stocks are terminal feature exclusions but remain in the actual cash trading clock when price rows exist. Dates with both sources empty are terminal no-market exclusions and are removed from the trading clock. The 20-day target is anchored to this FinMind-price-present cash trading sequence. No model outcome was inspected."
+    ,
+    "retrieval_semantics": "FinMind all-market mode returns exactly start_date; fetch one TWII trading date per source request, with the two sources allowed to run concurrently"
+  },
+  "price_breadth_additions": [
+    "advancing, declining and unchanged fractions",
+    "advance-minus-decline breadth",
+    "equal-weight and median daily return",
+    "cross-sectional return dispersion",
+    "positive and negative two-percent tail fractions",
+    "up-volume fraction and volume-weighted return",
+    "top-ten trading-money concentration and median log trading money"
+  ],
+  "institutional_breadth_additions": [
+    "foreign, investment-trust and era-consistent combined-dealer positive/negative fractions",
+    "investor-level median and aggregate net/gross intensity",
+    "combined institutional breadth and median/aggregate intensity",
+    "top-ten absolute-net concentration",
+    "foreign-versus-investment-trust sign disagreement"
+  ],
+  "variants": {
+    "index_aggregate_control": "locked causal index trend/volatility plus aggregate FinMind cash-institution features",
+    "plus_price_breadth": "control plus price breadth additions",
+    "plus_price_and_institutional_breadth": "control plus all registered breadth additions"
+  },
+  "simple_baselines": [
+    "expanding prior majority",
+    "20-day index momentum",
+    "20-day index reversal",
+    "120-day index trend",
+    "sign of same-day advance-minus-decline breadth",
+    "sign of same-day combined institutional breadth"
+  ],
+  "walk_forward": {
+    "training_rows": 1512,
+    "inner_validation_rows": 252,
+    "test_block_rows": 252,
+    "purge_rows_at_every_fit_boundary": 20,
+    "lambdas": [0.1, 1.0, 10.0, 100.0, 1000.0],
+    "abstention_quantiles": [0.0, 0.25, 0.5, 0.65, 0.75, 0.85],
+    "configuration_selection": "accuracy first, then coverage, using only the prior validation segment",
+    "formal_effective_records": "greedy chronological origins separated by at least 20 TWII trading rows"
+  },
+  "gate": {
+    "minimum_accuracy": 0.9,
+    "minimum_cases": 100,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "maximum_exact_mcnemar_p": 0.05,
+    "must_beat_strongest_simple_baseline": true,
+    "must_show_significant_increment_over_control": true
+  },
+  "warning": "No breadth direction or coefficient may enter production unless every gate passes on non-overlapping strict OOS records.",
+  "implementation": {
+    "scripts/fetch_finmind_cross_sectional_breadth.py": "31FD049D0834F54B86D5C23C8462C56B6D377BB64CDC60FAB5746AE402F3F9DA",
+    "scripts/research_cross_sectional_breadth_cycle.py": "FEE162D69AF574E05B59BA498E4475FA24DDC75BFA0913F3745A4540815D2ECF"
+  }
+}

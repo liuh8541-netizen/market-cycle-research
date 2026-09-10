@@ -1,0 +1,23 @@
+[
+  {
+    "profile_id": "twii_daily_lifecycle_health_observation_v1",
+    "version": "1.0",
+    "scope": {
+      "market": "TWII",
+      "timeframe": "daily",
+      "target": "lifecycle_health",
+      "lifecycle_stage": [
+        "bottoming",
+        "early_bull",
+        "main_bull",
+        "topping",
+        "early_bear",
+        "main_bear"
+      ]
+    },
+    "calibration_status": "pending_independent_validation",
+    "constants": {},
+    "minimum_history": 504,
+    "note": "範圍已固定；尚未估計及鎖定生命力、合理變異與轉段常數，不得作正式診斷。"
+  }
+]

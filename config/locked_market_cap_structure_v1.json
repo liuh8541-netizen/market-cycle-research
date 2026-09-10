@@ -1,0 +1,52 @@
+{
+  "experiment": "market_cap_structure_v1",
+  "locked_at": "2026-07-23",
+  "hypothesis": "Point-in-time all-market capitalization concentration, breadth and concentration change measure internal leadership structure and add stable 20-trading-day TWII direction beyond index trend and aggregate FinMind positioning.",
+  "decision_time": "After date-t cash close and publication of date-t TaiwanStockMarketValue.",
+  "target": "TWII close direction from date t to 20 actual Taiwan cash-market trading days later.",
+  "data_semantics": {
+    "dataset": "TaiwanStockMarketValue",
+    "daily_rows": 5271,
+    "failed_dates": 0,
+    "earliest_date": "2005-01-03",
+    "latest_date": "2026-07-23",
+    "point_in_time_universe": "Four-digit common stocks with positive market value on that source date; no current constituent list.",
+    "minimum_stock_count": 684,
+    "maximum_stock_count": 2320,
+    "raw_persistence": "Raw security rows are reduced to one immutable daily aggregate row and are not retained."
+  },
+  "features": [
+    "causal 252-row z-score of active stock count",
+    "causal 252-row z-score of log total market capitalization",
+    "causal z-scores of top-1, top-5, top-10, top-20 and top-50 capitalization shares",
+    "causal z-score of bottom-half capitalization share",
+    "causal z-score of capitalization HHI",
+    "causal z-scores of median log capitalization, log-cap IQR and q90-q10 spread",
+    "causal z-scores of 20-day top-10-share and HHI changes"
+  ],
+  "feature_transform": "Every transform uses only date-t and earlier observations, with a 252-row window and minimum 126 rows.",
+  "method": "1512/252/252 nested ridge-abstention, 20-row purge at fit/validation boundaries, frozen lambda and confidence threshold for each following test block, and effective origins separated by at least 20 actual TWII rows.",
+  "baselines": [
+    "prior_majority",
+    "momentum_20",
+    "reversal_20",
+    "trend_120"
+  ],
+  "gates": {
+    "accuracy": 0.9,
+    "cases": 100,
+    "coverage": 0.1,
+    "wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "paired_p": 0.05
+  },
+  "formal_run_policy": "Execute exactly once after this manifest. No result-dependent feature, threshold, date, horizon, subgroup or baseline changes are allowed.",
+  "implementation_hashes": {
+    "scripts/research_market_cap_structure.py": "67ABD5229E8EAF6104F4813045850C6675485BED55DF527AB646251E460DD49F",
+    "scripts/research_cross_sectional_breadth_cycle.py": "FEE162D69AF574E05B59BA498E4475FA24DDC75BFA0913F3745A4540815D2ECF",
+    "scripts/fetch_finmind_market_cap_structure.py": "CB1FBA8FA9FC2A9F5C1A9153BDE96FFD282B3FAF05EED5DED0E7E62236985BB9",
+    "data/processed/factors/market_cap_structure.csv": "2DC10828F38D055AF7CE0DA111F278A7A8243C76CDBB07F53A228FCC390CB310",
+    "data/processed/factors/market_cap_fetched_dates.csv": "167A5F82B25A998505F6F52231976B8F383E8A15EFEA351BD592F12A9DEC32CE"
+  },
+  "promotion_policy": "The market-cap treatment must pass every absolute gate, significantly beat the strongest simple baseline on identical dates, and significantly beat the index/aggregate control on common dates. Otherwise every market-cap directional coefficient remains zero."
+}

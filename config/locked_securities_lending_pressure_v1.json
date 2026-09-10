@@ -1,0 +1,51 @@
+{
+  "experiment": "securities_lending_pressure_v1",
+  "locked_at": "2026-07-23",
+  "hypothesis": "All-market securities-lending participation, concentration and borrow-fee pressure provide a causal internal-short-pressure state that adds 20-trading-day TWII direction beyond index trend and aggregate FinMind factors.",
+  "decision_time": "After date-t cash close and publication of date-t securities-lending transactions.",
+  "target": "TWII close direction from date t to 20 actual Taiwan cash-market trading days later.",
+  "data_semantics": {
+    "dataset": "TaiwanStockSecuritiesLending",
+    "source_range_used": "2010-01-01 through 2026-07-23",
+    "daily_rows": 4038,
+    "failed_dates": 0,
+    "point_in_time_universe": "Four-digit common stocks present in that source date; no current constituent list.",
+    "raw_persistence": "Raw security rows are aggregated per source date and are not retained."
+  },
+  "features": [
+    "causal 252-row z-score of active stock count",
+    "causal 252-row z-score of transaction count",
+    "causal 252-row z-score of log lending volume",
+    "causal 252-row z-score of log lending money",
+    "causal 252-row z-score of volume-weighted fee rate",
+    "causal 252-row z-score of median fee rate",
+    "causal 252-row z-score of top-10 stock volume concentration",
+    "causal 252-row z-score of competitive-transaction fraction",
+    "causal 252-row z-score of five-day log-volume change",
+    "causal 252-row z-score of five-day weighted-fee change"
+  ],
+  "method": "1512/252/252 nested ridge-abstention, 20-row purge at fit/validation boundaries, frozen lambda and confidence threshold for each following test block, and effective origins greedily separated by at least 20 actual TWII rows.",
+  "baselines": [
+    "prior_majority",
+    "momentum_20",
+    "reversal_20",
+    "trend_120"
+  ],
+  "gates": {
+    "accuracy": 0.9,
+    "cases": 100,
+    "coverage": 0.1,
+    "wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "paired_p": 0.05
+  },
+  "formal_run_policy": "One execution after all data, feature, grid, baseline, gate and implementation hashes are locked. No subgroup or threshold changes after outcomes are read.",
+  "implementation_hashes": {
+    "scripts/research_securities_lending_pressure.py": "8C28789F49447EE8668381B4182E40CC9292A7B91B86131F0B1864AC1C962308",
+    "scripts/research_cross_sectional_breadth_cycle.py": "FEE162D69AF574E05B59BA498E4475FA24DDC75BFA0913F3745A4540815D2ECF",
+    "scripts/fetch_finmind_securities_lending_pressure.py": "4F77EAB01240109E30E07FB6AB58CB3CB071B3B2DA304A45696D6066D1EE90A1",
+    "data/processed/factors/securities_lending_pressure.csv": "2758CE8728B704ED80FA0A9A7ED263A02F13948F332B351362CF08AE2DD5DF92",
+    "data/processed/factors/securities_lending_fetched_dates.csv": "F7989C6EB53063BA81BF042ABB8E03B5AC3F0647B83241E739251359E46C9C87"
+  },
+  "promotion_policy": "The lending treatment must pass every absolute gate, significantly beat the strongest simple baseline on identical dates, and significantly beat the index/aggregate control on common dates. Otherwise all lending directional coefficients remain zero."
+}

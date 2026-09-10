@@ -1,0 +1,32 @@
+{
+  "candidate_id": "canonical_night_spread_gap_v1",
+  "locked_at": "2026-07-23",
+  "status": "historically_validated_forward_monitoring",
+  "scope": "TWII same-day cash open versus prior TWII cash close only",
+  "data_semantics": "FinMind TaiwanFuturesDaily after_market date D covers prior business day 15:00 through D 05:00; signal_date equals D.",
+  "algorithm": "Prediction is sign(tx_night_spread_per). On each run, select an absolute confidence threshold from quantiles 0.00 through 0.90 step 0.05 using only the latest 756 completed aligned days; require at least 10% training coverage; apply the frozen threshold to subsequent dates.",
+  "historical_walk_forward": {
+    "oos_blocks": 11,
+    "cases": 344,
+    "hits": 335,
+    "accuracy": 0.9738372093023255,
+    "coverage": 0.2481962481962482,
+    "wilson_95_lower": 0.9510327713011291,
+    "all_block_accuracy_at_least": 0.9347826086956522,
+    "external_majority_accuracy_on_identical_dates": 0.9156976744186046,
+    "external_model_only_correct": 22,
+    "external_baseline_only_correct": 2,
+    "external_mcnemar_p": 3.5881996154785156e-5,
+    "night_return_accuracy_on_identical_dates": 0.9680232558139535,
+    "edge_over_night_return": 0.005813953488371992,
+    "night_return_mcnemar_p": 0.5
+  },
+  "forward_gate": {
+    "minimum_new_cases": 100,
+    "minimum_accuracy": 0.9,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "must_beat_external_majority": true
+  },
+  "warning": "Validated only for the opening-gap direction. Do not interpret it as the cash-close, multi-day, or macro-cycle direction."
+}

@@ -1,0 +1,49 @@
+{
+  "candidate": "market_absorption_geometry_v1",
+  "status": "defined_without_direction_labels",
+  "unresolved_question": "Does the cross-sectional geometry of where stocks finish inside their completed daily ranges identify whether market-wide stress is being absorbed or amplified?",
+  "not_a_known_formula_claim": true,
+  "source": {
+    "dataset": "TaiwanStockPrice",
+    "official_start": "1994-10-01",
+    "project_start": "1997-07-02",
+    "update_time": "17:30 Asia/Taipei",
+    "earliest_use": "next trading decision after the completed source session"
+  },
+  "allowed_source_fields": [
+    "stock_id",
+    "date",
+    "max",
+    "min",
+    "close",
+    "spread",
+    "trading_money"
+  ],
+  "forbidden_during_factor_formation": [
+    "future TWII return",
+    "future direction",
+    "target",
+    "hit",
+    "post-hoc market regime label"
+  ],
+  "mechanism": {
+    "absorption": "A broad shock is absorbed when many stocks recover away from intraday lows despite negative close-to-close returns and when money is not concentrated in low-location closes.",
+    "amplification": "A shock is amplified when direction is synchronized, path efficiency is high, and a large share of stocks and money finish near the same adverse range extreme."
+  },
+  "planned_independent_history": {
+    "factor_definition_uses_labels": false,
+    "confirmation_period_not_earlier_than": "2014-01-01",
+    "confirmation_period_not_later_than": "2025-12-31",
+    "minimum_effective_nonoverlap_cases": 100,
+    "formal_model_not_yet_locked": true
+  },
+  "gates_may_not_be_lowered": {
+    "accuracy": 0.9,
+    "effective_cases": 100,
+    "coverage": 0.1,
+    "wilson_95_lower": 0.8,
+    "segment_stability": true,
+    "must_beat_strong_baseline_and_control": true
+  }
+}
+

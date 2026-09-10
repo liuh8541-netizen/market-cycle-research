@@ -1,0 +1,53 @@
+{
+  "experiment": "foreign_shareholding_structure_v1",
+  "locked_at": "2026-07-24",
+  "hypothesis": "Point-in-time foreign-ownership level, breadth, concentration and 20-day change measure internal ownership constitution and add stable 20-trading-day TWII direction beyond index trend and aggregate FinMind transaction flow.",
+  "decision_time": "After date-t cash close and publication of date-t TaiwanStockShareholding.",
+  "target": "TWII close direction from date t to 20 actual Taiwan cash-market trading days later.",
+  "data_semantics": {
+    "dataset": "TaiwanStockShareholding",
+    "daily_rows": 5271,
+    "failed_dates": 0,
+    "earliest_date": "2005-01-03",
+    "latest_date": "2026-07-23",
+    "point_in_time_universe": "Four-digit common stocks with valid issued shares and foreign-ownership values on each source date; no current constituent list.",
+    "minimum_stock_count": 694,
+    "maximum_stock_count": 1977,
+    "raw_persistence": "Raw security rows are reduced to one immutable daily aggregate row and are not retained."
+  },
+  "features": [
+    "causal z-scores of valid stock count and valid fraction",
+    "issued-share-weighted foreign ownership ratio",
+    "median and IQR of stock-level foreign ownership ratio",
+    "zero, above-10%, above-20% and above-40% ownership breadth",
+    "log total foreign-owned shares",
+    "top-10 foreign-share concentration and foreign-share HHI",
+    "median remaining investment ratio and restricted-upper-limit breadth",
+    "20-day changes in weighted ownership, median ownership, above-20% breadth and top-10 concentration"
+  ],
+  "feature_transform": "All 18 features use only date-t and earlier observations, standardized over a causal 252-row window with at least 126 rows.",
+  "method": "1512/252/252 nested ridge-abstention, 20-row purge at fit/validation boundaries, frozen lambda and confidence threshold for each following test block, and effective origins separated by at least 20 actual TWII rows.",
+  "baselines": [
+    "prior_majority",
+    "momentum_20",
+    "reversal_20",
+    "trend_120"
+  ],
+  "gates": {
+    "accuracy": 0.9,
+    "cases": 100,
+    "coverage": 0.1,
+    "wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "paired_p": 0.05
+  },
+  "formal_run_policy": "Execute exactly once after this manifest. No result-dependent feature, threshold, date, horizon, subgroup or baseline changes are allowed.",
+  "implementation_hashes": {
+    "scripts/research_foreign_shareholding_structure.py": "474DC9CBE99F3EB78041C93FC7D29E8A0B4CA4855C923BAAC5DB1989009E3849",
+    "scripts/research_cross_sectional_breadth_cycle.py": "FEE162D69AF574E05B59BA498E4475FA24DDC75BFA0913F3745A4540815D2ECF",
+    "scripts/fetch_finmind_foreign_shareholding_structure.py": "E9CC46AEC294EF22030606713A8B31768A38683DC29F55415F2609EA1E06C7F6",
+    "data/processed/factors/foreign_shareholding_structure.csv": "CA2816E51EDE7E1E8F00C2E71FAD1A2499EAFE6661649D1EC999CA9D695A71E7",
+    "data/processed/factors/foreign_shareholding_fetched_dates.csv": "12FC94E27DA7371F04C8F57E242B7197365E88A50AAB9AB5DD5D0C8D377AA6F2"
+  },
+  "promotion_policy": "The foreign-shareholding treatment must pass every absolute gate, significantly beat the strongest simple baseline on identical dates, and significantly beat the index/aggregate control on common dates. Otherwise every foreign-shareholding directional coefficient remains zero."
+}

@@ -1,0 +1,65 @@
+{
+  "experiment_id": "orderbook_early_pulse_close_v1",
+  "registered_at": "2026-07-23T16:15:00+08:00",
+  "status": "pre-registered before historical backfill and formal result execution",
+  "hypothesis": "Market-wide order and trade pressure through 09:15 adds remaining-day direction beyond the observed TAIEX price path.",
+  "target": {
+    "definition": "sign(TWII cash close / observed TAIEX at 09:15:00 - 1)",
+    "positive_class": "close at or above the 09:15 level",
+    "decision_time": "09:15:00 Asia/Taipei"
+  },
+  "data": {
+    "source": "FinMind TaiwanStockStatisticsOfOrderBookAndTrade",
+    "start_date": "2020-01-01",
+    "end_date": "2026-07-23",
+    "cutoff_inclusive": "09:15:00",
+    "minimum_early_observations": 120,
+    "expected_regular_observations": 181
+  },
+  "control": "All locked taiex_early_pulse_close_v1 price-path and open-known features",
+  "orderbook_additions": [
+    "order_count_imbalance",
+    "order_volume_imbalance",
+    "order_size_log_ratio",
+    "order_count_imbalance_change",
+    "order_volume_imbalance_change",
+    "order_growth_imbalance",
+    "volume_growth_imbalance",
+    "late_order_growth_imbalance",
+    "late_volume_growth_imbalance",
+    "log_deal_order_15m",
+    "log_deal_volume_15m",
+    "log_deal_money_15m",
+    "price_x_order_volume",
+    "gap_x_order_count"
+  ],
+  "simple_baselines": [
+    "sign(first_15_minute_return)",
+    "negative_sign(first_15_minute_return)",
+    "sign(opening_gap)",
+    "sign(TX_night_spread)",
+    "sign(order_count_imbalance)",
+    "sign(order_volume_imbalance)"
+  ],
+  "walk_forward": {
+    "history": 756,
+    "inner_validation": 126,
+    "test_block": 126,
+    "lambdas": [0.1, 1.0, 10.0, 100.0],
+    "abstention_quantiles": [0.0, 0.25, 0.5, 0.65, 0.75, 0.85]
+  },
+  "gate": {
+    "minimum_accuracy": 0.9,
+    "minimum_cases": 100,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "maximum_exact_mcnemar_p": 0.05,
+    "must_beat_strongest_simple_baseline": true,
+    "must_show_significant_increment_over_price_path_control": true
+  },
+  "implementation": {
+    "scripts/research_orderbook_early_pulse_close.py": "F21BFCD08A800614503491590497CC4BCA998E5811FF1745530B30DB67904410",
+    "scripts/fetch_finmind_orderbook_early_pulse.py": "FB7D4F710BA4F703BB481E5BDAB7B7547BA26E357E4287D75F0E00BB938C990F"
+  }
+}

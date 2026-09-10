@@ -1,0 +1,38 @@
+{
+  "candidate_id": "nonlinear_premarket_state_gap_v2",
+  "locked_at": "2026-07-23",
+  "status": "retired_dominated_by_canonical_night_return_baseline",
+  "target": "same-day TWII open versus prior TWII close",
+  "algorithm": "For each run use the latest 756 aligned completed days: first 630 fit causal AdaBoost stumps, last 126 select rounds, learning rate and absolute confidence threshold with the 90%-and-baseline gate prioritized; freeze and predict subsequent dates.",
+  "parameter_grid": {
+    "rounds_learning_rate": [[10, 0.05], [25, 0.05], [50, 0.05], [10, 0.1], [25, 0.1], [50, 0.1], [25, 0.2]],
+    "confidence_quantiles": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+  },
+  "historical_exploratory_evidence": {
+    "cases": 171,
+    "hits": 157,
+    "accuracy": 0.9181286549707602,
+    "coverage": 0.4523809523809524,
+    "wilson_95_lower": 0.8672774257867318,
+    "external_majority_accuracy": 0.9122807017543859,
+    "model_only_correct": 2,
+    "baseline_only_correct": 1,
+    "mcnemar_exact_p": 1.0
+  },
+  "forward_gate": {
+    "minimum_new_cases": 100,
+    "minimum_accuracy": 0.9,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "must_beat_external_majority": true,
+    "maximum_paired_mcnemar_p": 0.05
+  },
+  "retirement_audit": {
+    "legacy_evidence_invalid_reason": "2234 of 2243 canonical night rows had a legacy next-day signal_date shift.",
+    "corrected_cases": 203,
+    "corrected_accuracy": 0.9556650246305419,
+    "corrected_night_return_accuracy_on_identical_dates": 0.9556650246305419,
+    "decision": "Retired because its corrected predictions were identical to the simple night-return baseline on all selected dates."
+  },
+  "warning": "Retired research artifact. Do not create new prospective forecasts from this manifest."
+}

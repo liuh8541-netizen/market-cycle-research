@@ -1,0 +1,28 @@
+{
+  "updated_at": "2026-07-23",
+  "production_multi_day_coefficient": 0,
+  "scope": "D+1 opening-gap direction and 20-day-or-longer lifecycle direction",
+  "reason": "No FinMind cash, margin, futures or option factor passed the registered purged accuracy, sample, coverage, Wilson and strong-baseline gates at either evaluated scope.",
+  "research_diagnostics_retained": [
+    "heuristic_chip_score",
+    "heuristic_derivative_score",
+    "all raw and rolling factor columns"
+  ],
+  "notable_unpromoted_finding": {
+    "factor": "futures_foreign_net_20d_z",
+    "horizon_days": 60,
+    "observed_polarity": "inverse",
+    "polarity_windows": "0 same / 5 inverse",
+    "overlapping_cases": 381,
+    "accuracy": 0.7401574803149606,
+    "baseline": 0.5091863517060368,
+    "nonoverlap_cases": 12,
+    "decision": "Insufficient independent samples; coefficient remains zero."
+  },
+  "evaluated_targets": {
+    "multi_day_lifecycle": "reports/finmind_factor_direction_purged.md",
+    "next_opening_gap_cash_margin": "reports/after_close_next_gap.md",
+    "next_opening_gap_derivative_ablation": "reports/after_close_derivative_ablation.md"
+  },
+  "audit_report": "reports/finmind_factor_direction_purged.md"
+}

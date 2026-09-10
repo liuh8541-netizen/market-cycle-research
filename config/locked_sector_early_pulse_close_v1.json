@@ -1,0 +1,64 @@
+{
+  "experiment_id": "sector_early_pulse_close_v1",
+  "registered_at": "2026-07-23T16:55:00+08:00",
+  "status": "pre-registered before historical backfill and formal result execution",
+  "hypothesis": "Core TWSE/TPEx sector breadth, dispersion and rotation through 09:15 adds remaining-day direction beyond aggregate price and order-book pressure.",
+  "target": {
+    "definition": "sign(TWII cash close / observed TAIEX at 09:15:00 - 1)",
+    "decision_time": "09:15:00 Asia/Taipei"
+  },
+  "data": {
+    "source": "FinMind TaiwanStockEvery5SecondsIndex",
+    "data_ids": ["Electronic", "FinancialInsurance", "TPExIndex"],
+    "series": [
+      "twse Electronic",
+      "tpex Electronic",
+      "twse FinancialInsurance",
+      "tpex TPExIndex"
+    ],
+    "start_date": "2020-01-01",
+    "end_date": "2026-07-23",
+    "cutoff_inclusive": "09:15:00",
+    "expected_observations_per_series": 181
+  },
+  "control": "All locked price-path and orderbook_early_pulse_close_v1 features",
+  "sector_additions": [
+    "four fixed series 15-minute returns",
+    "four fixed series last-five-minute returns",
+    "mean return",
+    "cross-series dispersion",
+    "full-window and last-five-minute breadth",
+    "electronic-versus-finance rotation",
+    "TPEx-versus-TWSE electronic rotation",
+    "TPEx-versus-TAIEX rotation"
+  ],
+  "simple_baselines": [
+    "all baselines locked in orderbook_early_pulse_close_v1",
+    "sign(core-sector mean return)",
+    "sign(TWSE electronic return)",
+    "sign(TWSE financial return)",
+    "sign(TPEx index return)"
+  ],
+  "walk_forward": {
+    "history": 756,
+    "inner_validation": 126,
+    "test_block": 126,
+    "lambdas": [0.1, 1.0, 10.0, 100.0],
+    "abstention_quantiles": [0.0, 0.25, 0.5, 0.65, 0.75, 0.85]
+  },
+  "gate": {
+    "minimum_accuracy": 0.9,
+    "minimum_cases": 100,
+    "minimum_coverage": 0.1,
+    "minimum_wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "maximum_exact_mcnemar_p": 0.05,
+    "must_beat_strongest_simple_baseline": true,
+    "must_show_significant_increment_over_aggregate_control": true
+  },
+  "implementation": {
+    "scripts/research_sector_early_pulse_close.py": "E6F1862454502B222AA2CB0DDCE86DACB59E61D40510A7CCF4259518D5626E2F",
+    "scripts/fetch_finmind_sector_early_pulse.py": "8950CF9E42C604C655ACF53DBEB03713E6DDB654DDDE47BAC5FFF86B1DCA7600",
+    "scripts/research_orderbook_early_pulse_close.py": "F21BFCD08A800614503491590497CC4BCA998E5811FF1745530B30DB67904410"
+  }
+}

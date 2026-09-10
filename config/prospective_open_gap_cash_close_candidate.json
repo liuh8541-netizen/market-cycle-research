@@ -1,0 +1,41 @@
+{
+  "candidate_id": "open_gap_acceptance_q85_v1",
+  "status": "hypothesis_generated_from_posthoc_sensitivity_requires_prospective_confirmation",
+  "decision_time": "TWII cash open, after the official opening value is observable",
+  "target": "same-day TWII cash close versus prior cash close",
+  "prediction": "sign(open / prior_close - 1)",
+  "actionability": "abs(open / prior_close - 1) >= rolling 85th percentile of the preceding 756 aligned completed days",
+  "parameters_locked": {
+    "history_days": 756,
+    "quantile": 0.85,
+    "direction": "opening_gap_sign"
+  },
+  "historical_posthoc_evidence": {
+    "cases": 275,
+    "accuracy": 0.9381818181818182,
+    "coverage": 0.1984126984126984,
+    "wilson_95_lower": 0.9032413663157632,
+    "night_spread_accuracy_identical_dates": 0.9127272727272727,
+    "model_only": 10,
+    "night_only": 3,
+    "mcnemar_exact_p": 0.09228515625,
+    "minimum_material_window_accuracy": 0.8
+  },
+  "promotion_gate": {
+    "prospective_resolved_actionable_cases": 100,
+    "accuracy": 0.9,
+    "coverage": 0.1,
+    "wilson_95_lower": 0.8,
+    "paired_superiority_over_night_spread": true
+  },
+  "prospective_logger": "scripts/forecast_prospective_open_gap_cash_close.py",
+  "capture_monitor": "scripts/capture_open_gap_candidate.ps1",
+  "forecast_log": "reports/prospective_open_gap_cash_close_log.json",
+  "status_report": "reports/prospective_open_gap_cash_close_status.md",
+  "first_prospective_record": {
+    "signal_date": "2026-07-23",
+    "created_at_taipei": "2026-07-23T10:05:16.187234+08:00",
+    "actionable": false
+  },
+  "warning": "Historical family was selected after inspecting a related OOS result and is not formally validated. It must not enter production direction until the prospective gate passes."
+}

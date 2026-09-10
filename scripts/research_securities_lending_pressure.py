@@ -1,0 +1,141 @@
+"""Locked purged OOS test of securities-lending pressure for TWII direction."""
+
+import hashlib
+import json
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+import research_cross_sectional_breadth_cycle as core
+
+
+ROOT = Path(__file__).resolve().parents[1]
+CONFIG = ROOT / "config/locked_securities_lending_pressure_v1.json"
+DATA = ROOT / "data/processed/factors/securities_lending_pressure.csv"
+OUTPUT_JSON = ROOT / "reports/securities_lending_pressure.json"
+OUTPUT_MD = ROOT / "reports/securities_lending_pressure.md"
+
+CONTROL = core.CONTROL
+LENDING = [
+    "lend_stock_count_z",
+    "lend_trade_count_z",
+    "lend_log_volume_z",
+    "lend_log_money_z",
+    "lend_weighted_fee_z",
+    "lend_median_fee_z",
+    "lend_top10_share_z",
+    "lend_competitive_fraction_z",
+    "lend_log_volume_change_5_z",
+    "lend_fee_change_5_z",
+]
+
+
+def sha256(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest().upper()
+
+
+def causal_z(series, window=252, minimum=126):
+    series = pd.to_numeric(series, errors="coerce")
+    mean = series.rolling(window, min_periods=minimum).mean()
+    std = series.rolling(window, min_periods=minimum).std(ddof=0).replace(0, np.nan)
+    return (series - mean) / std
+
+
+def prepare():
+    frame = core.prepare()
+    lending = pd.read_csv(DATA)
+    lending["date"] = pd.to_datetime(lending["date"], errors="raise")
+    frame = frame.merge(lending, on="date", how="inner").sort_values("date")
+    frame["lend_stock_count_z"] = causal_z(frame["lending_stock_count"])
+    frame["lend_trade_count_z"] = causal_z(frame["lending_trade_count"])
+    log_volume = np.log1p(frame["lending_volume"])
+    log_money = np.log1p(frame["lending_money"])
+    frame["lend_log_volume_z"] = causal_z(log_volume)
+    frame["lend_log_money_z"] = causal_z(log_money)
+    frame["lend_weighted_fee_z"] = causal_z(frame["lending_weighted_fee_rate"])
+    frame["lend_median_fee_z"] = causal_z(frame["lending_median_fee_rate"])
+    frame["lend_top10_share_z"] = causal_z(frame["lending_volume_top10_share"])
+    frame["lend_competitive_fraction_z"] = causal_z(
+        frame["lending_competitive_fraction"]
+    )
+    frame["lend_log_volume_change_5_z"] = causal_z(log_volume.diff(5))
+    frame["lend_fee_change_5_z"] = causal_z(
+        frame["lending_weighted_fee_rate"].diff(5)
+    )
+    required = CONTROL + LENDING
+    frame[required] = frame[required].replace([np.inf, -np.inf], np.nan)
+    return frame.dropna(subset=required).reset_index(drop=True)
+
+
+def main():
+    config = json.loads(CONFIG.read_text(encoding="utf-8"))
+    for relative, expected in config["implementation_hashes"].items():
+        if sha256(ROOT / relative) != expected:
+            raise RuntimeError(f"Locked hash mismatch: {relative}")
+    core.BASELINES = config["baselines"]
+    frame = prepare()
+    variants = {
+        "index_aggregate_control": core.evaluate(frame, CONTROL),
+        "plus_securities_lending": core.evaluate(frame, CONTROL + LENDING),
+    }
+    increment = core.paired(
+        variants["index_aggregate_control"],
+        variants["plus_securities_lending"],
+    )
+    increment_passed = (
+        increment["right_only"] > increment["left_only"]
+        and increment["mcnemar_exact_p"] < config["gates"]["paired_p"]
+    )
+    variants["index_aggregate_control"]["passed"] = variants[
+        "index_aggregate_control"
+    ]["passed_base_gate"]
+    variants["plus_securities_lending"]["passed"] = (
+        variants["plus_securities_lending"]["passed_base_gate"]
+        and increment_passed
+    )
+    payload = {
+        "experiment": config["experiment"],
+        "aligned_rows": len(frame),
+        "data_sha256": sha256(DATA),
+        "variants": variants,
+        "lending_increment": increment,
+        "lending_increment_passed": increment_passed,
+        "passing": [
+            name for name, result in variants.items() if result["passed"]
+        ],
+    }
+    OUTPUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    lines = [
+        "# Securities-lending pressure v1",
+        "",
+        f"- Aligned causal rows: {len(frame)}",
+        "",
+        "| Variant | Cases | Accuracy | Coverage | Wilson lower | Strongest baseline | Model/base only | Min block | Passed |",
+        "| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |",
+    ]
+    for name, result in variants.items():
+        lines.append(
+            f"| {name} | {result['cases']} | {result['accuracy']:.2%} | "
+            f"{result['coverage']:.2%} | {result['wilson_95_lower']:.2%} | "
+            f"{result['strongest_baseline']} "
+            f"{result['strongest_baseline_accuracy']:.2%} | "
+            f"{result['model_only']}/{result['baseline_only']} "
+            f"(p={result['mcnemar_exact_p']:.4g}) | "
+            f"{result['minimum_material_window_accuracy']:.2%} | "
+            f"{result['passed']} |"
+        )
+    lines += [
+        "",
+        f"Common dates: {increment['identical_dates']}; control/treatment "
+        f"{increment['left_accuracy']:.2%}/{increment['right_accuracy']:.2%}; "
+        f"exclusive control/treatment {increment['left_only']}/"
+        f"{increment['right_only']}; p={increment['mcnemar_exact_p']:.6g}.",
+        "",
+        f"Passing variants: {payload['passing']}",
+    ]
+    OUTPUT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()

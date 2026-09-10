@@ -1,0 +1,27 @@
+{
+  "closeout_date": "2026-07-24",
+  "scope": "existing measured evidence universe for broad 20-trading-day TWII direction",
+  "audit_complete": true,
+  "production_changed": false,
+  "formal_multi_day_direction_enabled": false,
+  "final_new_factor_experiments": [
+    {
+      "experiment": "monthly_revenue_breadth_v1",
+      "cases": 81,
+      "accuracy": 0.5555555555555556,
+      "strongest_baseline_accuracy": 0.6172839506172839,
+      "passed": false
+    },
+    {
+      "experiment": "credit_short_inventory_v1",
+      "cases": 67,
+      "accuracy": 0.5522388059701493,
+      "strongest_baseline_accuracy": 0.6417910447761194,
+      "passed": false
+    }
+  ],
+  "conclusion": "No evaluated broad 20-trading-day directional factor meets the locked practical gate. Close tuning in the current evidence universe.",
+  "next_research_allowed": "A separately preregistered unknown-factor project using factor formation without direction labels and an independent historical confirmation sample.",
+  "daily_data_policy": "Append each matured outcome as new history without rewriting the original forecast."
+}
+

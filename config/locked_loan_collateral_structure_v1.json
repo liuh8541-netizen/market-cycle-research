@@ -1,0 +1,52 @@
+{
+  "experiment": "loan_collateral_structure_v1",
+  "locked_at": "2026-07-24",
+  "hypothesis": "Nontraditional securities-backed credit balances, utilization, concentration and channel composition add stable 20-trading-day TWII direction beyond index trend and already-tested traditional aggregate margin factors.",
+  "decision_time": "After date-t cash close and publication of date-t TaiwanStockLoanCollateralBalance.",
+  "target": "TWII close direction from date t to 20 actual Taiwan cash-market trading days later.",
+  "data_semantics": {
+    "dataset": "TaiwanStockLoanCollateralBalance",
+    "daily_rows": 4839,
+    "failed_dates": 0,
+    "earliest_date": "2006-10-02",
+    "latest_date": "2026-07-23",
+    "point_in_time_universe": "Four-digit common stocks present on each source date; no current constituent list.",
+    "minimum_stock_count": 150,
+    "maximum_stock_count": 1852,
+    "treatment_scope": "Securities-firm loans, unrestricted-purpose loans, securities-finance secured loans and settlement financing. Traditional margin balances remain in the control only.",
+    "raw_persistence": "Raw security rows are reduced to one immutable daily aggregate row and are not retained."
+  },
+  "features": [
+    "log nontraditional-credit balance and daily balance change",
+    "active-stock breadth and aggregate utilization",
+    "top-10 concentration and HHI",
+    "nontraditional share of total observed credit",
+    "securities-firm, unrestricted, secured-finance and settlement channel shares",
+    "20-day changes in log balance, utilization and total-credit share"
+  ],
+  "feature_transform": "All 14 features use only date-t and earlier observations, standardized over a causal 252-row window with at least 126 rows.",
+  "method": "1512/252/252 nested ridge-abstention, 20-row purge at fit/validation boundaries, frozen lambda and confidence threshold for each following test block, and effective origins separated by at least 20 actual TWII rows.",
+  "baselines": [
+    "prior_majority",
+    "momentum_20",
+    "reversal_20",
+    "trend_120"
+  ],
+  "gates": {
+    "accuracy": 0.9,
+    "cases": 100,
+    "coverage": 0.1,
+    "wilson_95_lower": 0.8,
+    "minimum_material_block_accuracy": 0.8,
+    "paired_p": 0.05
+  },
+  "formal_run_policy": "Execute exactly once after this manifest. No result-dependent feature, threshold, date, horizon, subgroup or baseline changes are allowed.",
+  "implementation_hashes": {
+    "scripts/research_loan_collateral_structure.py": "3CDD357F0019FE4C81C686D48B5D8569987E3A6BD5CEF185A7DBDE7ED7380D95",
+    "scripts/research_cross_sectional_breadth_cycle.py": "FEE162D69AF574E05B59BA498E4475FA24DDC75BFA0913F3745A4540815D2ECF",
+    "scripts/fetch_finmind_loan_collateral_structure.py": "DDAE52B3676E201F7A3C972247F762BFAEEFA1C07CA4495ABAC74FBA5DD80202",
+    "data/processed/factors/loan_collateral_structure.csv": "3103749EF8BBE12182DECEAE0ED6C553B7C56EB16F358B3457D8A78CBD7A44B0",
+    "data/processed/factors/loan_collateral_fetched_dates.csv": "D20351CE2FEE2BE0BDE285BC75D32A7AECCDB515ECB094115E5D6FBD5B8F24D8"
+  },
+  "promotion_policy": "The nontraditional-credit treatment must pass every absolute gate, significantly beat the strongest simple baseline on identical dates, and significantly beat the index/aggregate control on common dates. Otherwise every new credit directional coefficient remains zero."
+}
