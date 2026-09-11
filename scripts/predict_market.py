@@ -6143,13 +6143,24 @@ def build_weather_satellite_forecast_model(payload: dict) -> dict:
         premarket, intraday, day_night, crash, external_reset
     )
     activation_triggers = trigger_model["active_triggers"]
+    night_trend = build_night_trend_summary(premarket, intraday, day_night)
 
+    night_spread = safe_float(night_trend.get("official_spread_per"))
     if storm_cells and any("崩盤" in item or "危機" in item for item in storm_cells):
         next_step_code = "storm_defense"
         next_step = "先防守風暴雲系；盤中破線、收盤破線、連續收不回需逐級升警。"
+    elif relation_code == "pending_day_validation" and night_spread is not None and night_spread >= 0.008:
+        next_step_code = "night_bullish_pending_cash"
+        next_step = "夜盤前哨偏多，下個日盤開局偏修復；重點看能否站回轉強線並守住夜盤低點。"
+    elif relation_code == "pending_day_validation" and night_spread is not None and night_spread <= -0.008:
+        next_step_code = "night_bearish_pending_cash"
+        next_step = "夜盤前哨偏空，下個日盤開局偏測壓；重點看是否跌破夜盤低點後收不回。"
+    elif relation_code == "pending_day_validation" and night_spread is not None and abs(night_spread) < 0.003:
+        next_step_code = "night_neutral_cash_decides"
+        next_step = "夜盤接近無方向，下個日盤由現貨開盤、權值承接與量能決定主軸。"
     elif relation_code == "pending_day_validation":
         next_step_code = "radar_pending_ground_truth"
-        next_step = "盤前雲圖偏向已出，但今日真正答案要等日盤開高低收驗證。"
+        next_step = "夜盤已有小幅試探，下個日盤依開盤缺口、低點防守與收盤位置確認。"
     elif relation_code == "night_up_cash_failed":
         next_step_code = "false_breakout_overtime"
         next_step = "夜盤先強但現貨反證，下一步以假突破延長賽處理。"
@@ -6165,6 +6176,24 @@ def build_weather_satellite_forecast_model(payload: dict) -> dict:
     else:
         next_step_code = "range_observation"
         next_step = "多空氣流未定，先用高低點突破與收盤位置判斷下一步。"
+    forecast_layers = [
+        f"夜盤前哨: {night_trend.get('label', '資料不足')}",
+        f"日盤開局: {next_step}",
+        "收盤定案: 站回轉強線偏修復，跌破防守線收不回偏風險升級。",
+    ]
+    zero_one_tilt = build_zero_one_directional_tilt(
+        integrated,
+        night_trend,
+        external_reset,
+        health_value,
+        intraday,
+        day_night,
+    )
+    confidence_scope = "信心低不是不預測；意思是夜盤路徑已可預判開局，但日盤收盤方向仍需現貨驗證。"
+    if premarket.get("is_non_trading_day"):
+        confidence_scope = "非交易日低信心不是不預測；夜盤與外部市場已形成下個交易日劇本，但台股現貨尚未開盤，收盤結論不能先定案。"
+    elif relation_code == "pending_day_validation":
+        confidence_scope = "盤前低信心不是不預測；夜盤趨勢可先判開局，但不得直接等同日盤收盤方向。"
     root_cause = build_root_cause_decomposition(
         next_step_code=next_step_code,
         day_night=day_night,
@@ -6182,6 +6211,9 @@ def build_weather_satellite_forecast_model(payload: dict) -> dict:
         "next_step": next_step,
         "bias": integrated.get("bias"),
         "confidence": integrated.get("confidence"),
+        "confidence_scope": confidence_scope,
+        "forecast_layers": forecast_layers,
+        "zero_one_tilt": zero_one_tilt,
         "market_weather": {
             "external_pressure": premarket.get("pressure", "資料不足"),
             "night_radar": day_night.get("relation_label", "資料不足"),
@@ -6191,6 +6223,7 @@ def build_weather_satellite_forecast_model(payload: dict) -> dict:
             "bagua_terrain": bagua.get("roles", {}).get("summary", "資料不足"),
             "external_reset": external_reset.get("label", "資料不足"),
         },
+        "night_trend": night_trend,
         "storm_cells": top_items(storm_cells, 5),
         "route_checks": top_items(route_checks, 6),
         "latent_disease_triggers": trigger_model,
@@ -6269,6 +6302,169 @@ def build_latent_disease_activation_triggers(
         "watch_triggers": top_items(watch, 8),
         "trigger_rule": "病灶不等於發病；必須由外部市場、夜盤幅度、開盤缺口、日內高低差、收盤位置與風險值共同觸發。",
         "guardrail": "觸發因子只提高或降低路徑機率，不單獨構成投資命令。",
+    }
+
+
+def build_night_trend_summary(premarket: dict, intraday: dict, day_night: dict) -> dict:
+    """Summarize TX night-session trend for the weather satellite headline."""
+    path = premarket.get("night_path") or intraday.get("night_path") or {}
+    basis = premarket.get("night_basis_audit") or {}
+    spread = safe_float(premarket.get("tx_night_spread_per") or path.get("spread_per"))
+    open_close = safe_float(premarket.get("tx_night_return") or path.get("return"))
+    previous_close_return = safe_float(
+        premarket.get("tx_night_vs_previous_close") or basis.get("vs_previous_night_close_return")
+    )
+    night_close = safe_float(premarket.get("tx_night_close") or path.get("close"))
+    night_low = safe_float(premarket.get("tx_night_low") or path.get("low"))
+    night_high = safe_float(premarket.get("tx_night_high") or path.get("high"))
+    close_position = safe_float(path.get("close_position"))
+    relation = day_night.get("relation_label", "待日盤驗證")
+
+    if spread is None and open_close is None and night_close is None:
+        return {
+            "available": False,
+            "label": "夜盤資料不足",
+            "summary": "目前沒有可用台指夜盤路徑，氣象衛星只能用外部市場與日盤資料。",
+            "validation": "補齊夜盤收盤、低點、開收報酬後再判斷。",
+        }
+
+    if spread is not None and spread >= 0.008:
+        label = "夜盤偏多待驗"
+        summary = "夜盤明顯偏多，但只代表前哨預期轉強；仍需日盤現貨承認。"
+    elif spread is not None and spread <= -0.008:
+        label = "夜盤偏空待驗"
+        summary = "夜盤明顯偏空，代表前哨壓力升高；需看日盤是否放大或收回。"
+    elif spread is not None and abs(spread) < 0.003:
+        label = "夜盤無方向"
+        summary = "夜盤接近0%，代表前哨不表態，日盤現貨將取得主導權。"
+    else:
+        label = "夜盤小幅試探"
+        summary = "夜盤只小幅試探，不足以直接改寫日盤方向。"
+
+    path_label = path.get("label") or label
+    path_summary = path.get("summary") or ""
+    if close_position is not None and close_position >= 0.75:
+        path_shape = "收在夜盤區間高檔，前哨心理偏穩。"
+    elif close_position is not None and close_position <= 0.25:
+        path_shape = "收在夜盤區間低檔，前哨壓力偏重。"
+    else:
+        path_shape = "收在夜盤區間中段，仍屬拉鋸。"
+
+    return {
+        "available": True,
+        "label": label,
+        "path_label": path_label,
+        "summary": summary,
+        "path_summary": path_summary,
+        "official_spread_per": spread,
+        "open_close_return": open_close,
+        "previous_night_close_return": previous_close_return,
+        "close": night_close,
+        "low": night_low,
+        "high": night_high,
+        "close_position": close_position,
+        "path_shape": path_shape,
+        "relation": relation,
+        "validation": "夜盤只作前哨雷達；日盤需用開盤是否一次反映、30～60分鐘是否收回、低點是否守住、收盤是否站回關鍵線驗證。",
+        "guardrail": "夜盤趨勢不得直接宣稱日盤收盤方向；接近0%必須標為無方向或待驗。",
+    }
+
+
+def build_zero_one_directional_tilt(
+    integrated: dict,
+    night_trend: dict,
+    external_reset: dict,
+    health_value: dict,
+    intraday: dict,
+    day_night: dict,
+) -> dict:
+    """Choose which 0/1 branch currently has better evidence without making a trade command."""
+    score = 0
+    evidence: list[str] = []
+    counter: list[str] = []
+
+    def add(points: int, text: str) -> None:
+        nonlocal score
+        score += points
+        evidence.append(text)
+
+    night_spread = safe_float(night_trend.get("official_spread_per"))
+    night_close_position = safe_float(night_trend.get("close_position"))
+    if night_spread is not None and night_spread >= 0.008:
+        add(2, f"夜盤官方漲幅 {pct(night_spread)}，前哨偏向修復。")
+    elif night_spread is not None and night_spread <= -0.008:
+        add(-2, f"夜盤官方跌幅 {pct(night_spread)}，前哨偏向測壓。")
+    elif night_spread is not None and abs(night_spread) < 0.003:
+        evidence.append("夜盤接近0%，前哨不給方向，日盤權重提高。")
+
+    if night_close_position is not None and night_close_position >= 0.75:
+        add(1, "夜盤收在區間高檔，追價心理仍在。")
+    elif night_close_position is not None and night_close_position <= 0.25:
+        add(-1, "夜盤收在區間低檔，避險壓力仍在。")
+
+    if integrated.get("bias") == "bullish":
+        add(1, "綜合訊號偏多。")
+    elif integrated.get("bias") == "bearish":
+        add(-1, "綜合訊號偏空。")
+
+    if external_reset.get("reset_active") and external_reset.get("direction") == "bearish":
+        add(-2, "外部利空重置啟動，偏向0/測壓。")
+    elif external_reset.get("direction") == "mixed":
+        evidence.append("外部多空混合，降低單邊確定性。")
+
+    if health_value.get("controllable_risk") is False:
+        add(-1, "健康價值判斷顯示風險不可完全放鬆。")
+    elif health_value.get("value") and safe_float(health_value.get("value")) >= 60:
+        add(1, "健康價值仍支撐可控波動。")
+
+    relation_code = day_night.get("relation_code")
+    if relation_code == "night_down_cash_down_validation":
+        add(-2, "夜跌日跌已被現貨確認。")
+    elif relation_code == "night_down_cash_reversal":
+        add(2, "夜跌被日盤收回，偏向轉機。")
+    elif relation_code == "pending_day_validation":
+        evidence.append("日盤尚未完成，0/1仍需地面站確認。")
+
+    defense = format_levels(intraday.get("defense_levels", [])) or "NA"
+    reclaim = format_levels(intraday.get("reclaim_levels", [])) or "NA"
+    counter.extend(
+        [
+            f"若跌破防守線 {defense} 且30～60分鐘收不回，偏向0/危機測壓。",
+            f"若站回轉強線 {reclaim} 且量能與族群不背離，偏向1/修復續攻。",
+            "若開高走低且收近低，夜盤偏多需降級為誘多或假突破。",
+        ]
+    )
+
+    if score >= 4:
+        branch = "1"
+        label = "偏1：修復候選較強"
+        summary = "目前事實與歷史經驗明顯偏向修復劇本，但仍需日盤收盤確認。"
+    elif score >= 2:
+        branch = "1"
+        label = "偏1：修復候選待確認"
+        summary = "目前事實與歷史經驗偏向修復劇本，但優勢尚未壓倒性，需由日盤站回轉強線確認。"
+    elif score <= -4:
+        branch = "0"
+        label = "偏0：測壓/風險候選較強"
+        summary = "目前事實與歷史經驗明顯偏向測壓劇本，需優先核對防守線是否失守。"
+    elif score <= -2:
+        branch = "0"
+        label = "偏0：測壓/風險候選待確認"
+        summary = "目前事實與歷史經驗偏向測壓劇本，但優勢尚未壓倒性，需由日盤跌破防守線確認。"
+    else:
+        branch = "0/1拉鋸"
+        label = "0/1未分勝負"
+        summary = "目前證據未形成壓倒性方向，先依關鍵線分流。"
+
+    return {
+        "framework": "zero_one_directional_tilt_v1",
+        "branch": branch,
+        "label": label,
+        "score": score,
+        "summary": summary,
+        "evidence": unique_text(evidence),
+        "counter_conditions": counter,
+        "rule": "先列0/1雙劇本，再用事實與歷史經驗判斷目前偏哪一方；偏向不是投資命令，必須由日盤收盤驗證。",
     }
 
 
@@ -6389,6 +6585,9 @@ def weather_satellite_headline(code: str) -> str:
     mapping = {
         "storm_defense": "風暴防守優先",
         "radar_pending_ground_truth": "盤前雲圖待地面驗證",
+        "night_bullish_pending_cash": "夜盤偏多，日盤待驗",
+        "night_bearish_pending_cash": "夜盤偏空，日盤待驗",
+        "night_neutral_cash_decides": "夜盤無方向，日盤主導",
         "false_breakout_overtime": "假突破延長賽",
         "washout_reclaim_watch": "下探收復觀察",
         "controlled_advance": "可控偏多續攻",
@@ -10706,6 +10905,8 @@ def render_brief_forecast(payload: dict) -> str:
     state_trade = bagua.get("roles", {}).get("state_gua", {}).get("trade_annotation") or bagua_trade_annotation(primary.get("code"))
     root_cause_items = satellite.get("root_cause_decomposition", {}).get("items", [])
     primary_root_cause = root_cause_items[0] if root_cause_items else {}
+    night_trend = satellite.get("night_trend", {})
+    zero_one_tilt = satellite.get("zero_one_tilt", {})
 
     lines = [
         f"# 台股大盤重點報告（{payload['input']['date']}）",
@@ -10713,6 +10914,10 @@ def render_brief_forecast(payload: dict) -> str:
         f"# 氣象衛星式下一步預判：{satellite.get('headline', '資料不足')}",
         f"**{satellite.get('next_step', '')}**",
         f"- 預報框架: {satellite.get('framework', 'NA')}；信心 {satellite.get('confidence', '資料不足')}",
+        f"- 信心範圍: {satellite.get('confidence_scope', '信心指整體日盤方向，不等於夜盤趨勢。')}",
+        f"- 預測三層: {'；'.join(satellite.get('forecast_layers', [])[:3]) or 'NA'}",
+        f"- 0/1偏向: {zero_one_tilt.get('label', '資料不足')}；分數 {zero_one_tilt.get('score', 'NA')}；{zero_one_tilt.get('summary', '')}",
+        f"- 夜盤趨勢: {night_trend.get('label', '資料不足')}；官方 {pct(night_trend.get('official_spread_per'))}；開收 {pct(night_trend.get('open_close_return'))}；前夜比較 {pct(night_trend.get('previous_night_close_return'))}；收 {num(night_trend.get('close'))}；低 {num(night_trend.get('low'))}；{night_trend.get('path_shape', '')}",
         f"- 觀測站: {'；'.join(satellite.get('route_checks', [])[:4]) or 'NA'}",
         f"- 風暴雲系: {'；'.join(satellite.get('storm_cells', [])[:3]) or '目前未見重大風暴雲系'}",
         f"- 發病觸發因子: {'；'.join(satellite.get('activation_triggers', [])[:4]) or '目前未觸發，列入觀察'}",
@@ -11430,6 +11635,7 @@ def render_weather_satellite_forecast_lines(satellite: dict) -> list[str]:
     if not satellite:
         return []
     weather = satellite.get("market_weather", {})
+    night_trend = satellite.get("night_trend", {})
     lines = [
         "",
         f"## 氣象衛星式下一步預判：{satellite.get('headline', '資料不足')}",
@@ -11437,6 +11643,8 @@ def render_weather_satellite_forecast_lines(satellite: dict) -> list[str]:
         f"- 下一步: {satellite.get('next_step', '')}",
         f"- 框架: {satellite.get('framework', 'NA')}",
         f"- 綜合方向/信心: {satellite.get('bias', 'unknown')} / {satellite.get('confidence', 'unknown')}",
+        f"- 信心範圍: {satellite.get('confidence_scope', '')}",
+        f"- 預測三層: {'；'.join(satellite.get('forecast_layers', [])) or 'NA'}",
         f"- 外部氣壓: {weather.get('external_pressure', '資料不足')}",
         f"- 夜盤雷達: {weather.get('night_radar', '資料不足')}",
         f"- 日盤地面站: {weather.get('cash_ground_truth', '資料不足')}",
@@ -11448,6 +11656,36 @@ def render_weather_satellite_forecast_lines(satellite: dict) -> list[str]:
         f"- 自主修正: {satellite.get('error_repair_policy', '')}",
         f"- 防呆: {satellite.get('guardrail', '')}",
     ]
+    if night_trend:
+        lines.extend(
+            [
+                "",
+                f"### 夜盤趨勢：{night_trend.get('label', '資料不足')}",
+                f"- 路徑判讀: {night_trend.get('path_label', 'NA')}；{night_trend.get('path_summary', '')}",
+                f"- 三基準: 官方 {pct(night_trend.get('official_spread_per'))}；開收 {pct(night_trend.get('open_close_return'))}；前夜比較 {pct(night_trend.get('previous_night_close_return'))}",
+                f"- 高低收: 高 {num(night_trend.get('high'))}；低 {num(night_trend.get('low'))}；收 {num(night_trend.get('close'))}",
+                f"- 收盤位置: {pct(night_trend.get('close_position'))}；{night_trend.get('path_shape', '')}",
+                f"- 日盤驗證: {night_trend.get('validation', '')}",
+                f"- 防呆: {night_trend.get('guardrail', '')}",
+            ]
+        )
+    zero_one_tilt = satellite.get("zero_one_tilt", {})
+    if zero_one_tilt:
+        lines.extend(
+            [
+                "",
+                f"### 0/1偏向仲裁：{zero_one_tilt.get('label', '資料不足')}",
+                f"- 分數: {zero_one_tilt.get('score', 'NA')}；分支: {zero_one_tilt.get('branch', 'NA')}",
+                f"- 結論: {zero_one_tilt.get('summary', '')}",
+                f"- 規則: {zero_one_tilt.get('rule', '')}",
+            ]
+        )
+        if zero_one_tilt.get("evidence"):
+            lines.append("- 偏向理由: " + "；".join(zero_one_tilt.get("evidence", [])))
+        if zero_one_tilt.get("counter_conditions"):
+            lines.extend(["", "#### 反證條件"])
+            for item in zero_one_tilt.get("counter_conditions", []):
+                lines.append(f"- {item}")
     if satellite.get("route_checks"):
         lines.extend(["", "### 下一步觀測站"])
         for item in satellite["route_checks"]:
