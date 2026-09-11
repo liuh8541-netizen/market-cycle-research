@@ -11019,7 +11019,7 @@ def render_compact_brief_forecast(payload: dict) -> str:
         f"- 市場心跳: {stethoscope.get('label', '資料不足')}｜分數 {stethoscope.get('score', 'NA')}｜{_compact_vitals(stethoscope)}",
         f"- 人性/兵法: {psychological_warfare.get('label', '資料不足')}｜戰術 {psychological_warfare.get('tactic_candidate', 'NA')}｜{_top_text(psychological_warfare.get('cause_effect_chain'), 2)}",
         f"- 日夜盤變異: {day_night_variance.get('label', '資料不足')}｜{day_night_variance.get('relation_label', 'unknown')}｜{_top_text(day_night_variance.get('cause_candidates'), 2)}",
-        f"- 實務病因: {practical.get('label', '資料不足')}｜即效藥 {practical.get('fact_changing_medicine', {}).get('label', 'NA')}｜主因 {_top_text(practical.get('internal_causes'), 3)}｜觸發 {_top_text(practical.get('external_triggers'), 3)}",
+        f"- 實務病因: {practical.get('label', '資料不足')}｜慢性病灶不會一天消失；單日劇變要看觸發鈕與倉位重定價｜即效藥 {practical.get('fact_changing_medicine', {}).get('label', 'NA')}｜主因 {_top_text(practical.get('internal_causes'), 3)}｜觸發 {_top_text(practical.get('external_triggers'), 3)}",
         f"- 漲跌歸因: {close_cause.get('label', '資料不足')}｜{close_cause.get('headline', '')}｜{_top_text(close_cause.get('cause_candidates'), 3)}",
         "",
         "# 驗證與留底",
