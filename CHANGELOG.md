@@ -40,3 +40,11 @@
 
 - 新增 `docs/cross_device_continuity.md`，記錄換電腦後的接續 SOP：clone/pull、安裝套件、恢復 FinMind Sponsor token、執行預測、安裝 Windows 每日排程、重建 Codex heartbeat 自主進化任務。
 - `README.md` 補上跨電腦接手入口，確保另一台電腦可依 GitHub、handoff 文件與 SOP 延續目前模型設定。
+
+## 2026-09-11
+
+### 對談觀察整理成模型改善手段
+
+- 新增 `research/MODEL_IMPROVEMENT_ROADMAP_FROM_DIALOGUE.md`，將使用者長期對談中累積的觀察整理為可實作規格。
+- 核心整理項目包含：劇本不是答案而是檢查表、階梯式緩升/緩降與雙週換檔、47,000 關卡攻防病歷、夜盤前哨與日盤裁判、資料即意圖痕跡、心律健康監控、病灶基因/觸發按鈕/即效藥、孫子兵法與八卦模型化、每日自主修正流程。
+- `research/HANDOFF_CURRENT.md` 與 `research/RESEARCH_INDEX.md` 補上此路線圖入口，確保跨電腦接手時不會遺失對談累積出的模型智慧。
