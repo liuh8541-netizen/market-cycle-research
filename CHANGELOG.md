@@ -54,3 +54,9 @@
 - 新增 `research/TACTICAL_CASE_2026-09-11_DETERRENCE_LINE.md`，記錄 2026-09-11 日盤圍繞 46,000 的戰術演進。
 - 案例命名包含「藏線嚇阻，留退伏攻」、「借敵死線，轉己生命」、「太極守線，借空補多」、「守線待變，以逸待勞」。
 - `research/TACTICAL_PRESSURE_TEST_46000_2026-09.md`、`research/MODEL_IMPROVEMENT_ROADMAP_FROM_DIALOGUE.md` 與 `research/RESEARCH_INDEX.md` 已補上此案例入口；後續須由夜盤與下週一走勢驗證，不得直接升級為投資命令。
+
+### 主因與觸發開關分離
+
+- `research/HUMAN_NATURE_CYCLE_FRAMEWORK.md` 新增「主因期限判斷」：外部新聞是引爆器，不是炸藥本身；炸藥是早已存在的病灶。
+- `research/MODEL_IMPROVEMENT_ROADMAP_FROM_DIALOGUE.md` 補上主因期限模型，要求用病灶深度、觸發強度、日盤吸收力與復發次數判斷影響期。
+- `research/HANDOFF_CURRENT.md` 補上交接規則：油價、通膨、利率、匯率、地緣政治與科技鏈估值不得被當成單日臨時主因，必須區分長期病灶與當日觸發。
