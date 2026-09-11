@@ -48,3 +48,9 @@
 - 新增 `research/MODEL_IMPROVEMENT_ROADMAP_FROM_DIALOGUE.md`，將使用者長期對談中累積的觀察整理為可實作規格。
 - 核心整理項目包含：劇本不是答案而是檢查表、階梯式緩升/緩降與雙週換檔、47,000 關卡攻防病歷、夜盤前哨與日盤裁判、資料即意圖痕跡、心律健康監控、病灶基因/觸發按鈕/即效藥、孫子兵法與八卦模型化、每日自主修正流程。
 - `research/HANDOFF_CURRENT.md` 與 `research/RESEARCH_INDEX.md` 補上此路線圖入口，確保跨電腦接手時不會遺失對談累積出的模型智慧。
+
+### 46,000 嚇阻線戰術病歷
+
+- 新增 `research/TACTICAL_CASE_2026-09-11_DETERRENCE_LINE.md`，記錄 2026-09-11 日盤圍繞 46,000 的戰術演進。
+- 案例命名包含「藏線嚇阻，留退伏攻」、「借敵死線，轉己生命」、「太極守線，借空補多」、「守線待變，以逸待勞」。
+- `research/TACTICAL_PRESSURE_TEST_46000_2026-09.md`、`research/MODEL_IMPROVEMENT_ROADMAP_FROM_DIALOGUE.md` 與 `research/RESEARCH_INDEX.md` 已補上此案例入口；後續須由夜盤與下週一走勢驗證，不得直接升級為投資命令。
