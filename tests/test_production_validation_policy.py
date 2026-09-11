@@ -171,6 +171,7 @@ class ProductionValidationPolicyTest(unittest.TestCase):
         self.assertEqual(technical["equation_answer"]["framework"], "technical_equation_answer_v1")
         self.assertIn("答案", technical["equation_answer"]["answer"])
         self.assertTrue(technical["equation_answer"]["best_formula"])
+        self.assertEqual(technical["equation_answer"]["research_status"], "experimental_hypothesis")
 
     def test_route_reference_uses_historical_pattern_samples(self):
         data = pd.read_csv(ROOT / "data" / "processed" / "twii_daily.csv")
@@ -516,6 +517,7 @@ class ProductionValidationPolicyTest(unittest.TestCase):
         self.assertIn("推理式程序", audit["rule"])
         self.assertIn("高等數學", audit["math_policy"])
         self.assertTrue(audit["candidate_variables"])
+        self.assertEqual(audit["research_status"], "experimental_hypothesis")
 
     def test_compact_forecast_record_persists_treatment_tracking_for_next_episode(self):
         payload = {

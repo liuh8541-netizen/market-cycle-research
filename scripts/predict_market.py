@@ -7810,8 +7810,9 @@ def build_technical_equation_answer(
         "technical_label": technical_label,
         "technical_bias": technical_bias,
         "equations": equations,
+        "research_status": "experimental_hypothesis",
         "rule": "計算式必須保留，但主報告以多公式仲裁後的答案為主；哪個公式最貼近收盤事實，後續由病歷驗證提高或降低權重。",
-        "guardrail": "方程式答案只作技術研判與風控分流，不產生投資命令。",
+        "guardrail": "方程式答案只是候選假說與前瞻實驗，不是定論，也不產生投資命令。",
     }
 
 
@@ -7912,10 +7913,11 @@ def build_equation_reasoning_audit(payload: dict) -> dict:
         "error_sources": unique_text(error_sources),
         "missing_variables": unique_text(missing_variables),
         "candidate_variables": candidate_variables,
+        "research_status": "experimental_hypothesis",
         "math_policy": "先補變數與誤差病歷，再做權重/貝葉斯/狀態轉移；高等數學不得用來掩蓋缺資料。",
         "next_checks": checks,
         "rule": "先用複雜方程式算出答案，再用推理式程序核對0/1、病因、日夜盤與保護層；一致才提高可信度，衝突就降權待驗。",
-        "guardrail": "公式推理對照只決定研究信心，不產生投資命令。",
+        "guardrail": "公式推理對照只決定研究信心；所有結論都是候選假說，需逐日驗證，不產生投資命令。",
     }
 
 
@@ -11362,7 +11364,7 @@ def render_compact_brief_forecast(payload: dict) -> str:
         f"- 下一步: {satellite.get('headline', '資料不足')}｜{satellite.get('next_step', '')}",
         f"- 總仲裁: {arbitration.get('headline', '資料不足')}｜{arbitration.get('risk_posture', 'NA')}｜主控 {arbitration.get('dominant_layer', 'NA')}",
         f"- 防呆保護: {protection.get('label', '資料不足')}｜分數 {protection.get('score', 'NA')}｜失效層 {_top_text(protection.get('failed_layers'), 3, '尚未見失效')}",
-        f"- 公式/推理對照: {equation_reasoning.get('label', '資料不足')}｜信任度 {equation_reasoning.get('trust', 'NA')}｜公式 {equation_reasoning.get('formula_answer', 'NA')}｜推理 {equation_reasoning.get('reasoning_answer', 'NA')}｜結論 {equation_reasoning.get('conclusion', '')}",
+        f"- 公式/推理對照: {equation_reasoning.get('label', '資料不足')}｜狀態 {equation_reasoning.get('research_status', 'experimental_hypothesis')}｜信任度 {equation_reasoning.get('trust', 'NA')}｜公式 {equation_reasoning.get('formula_answer', 'NA')}｜推理 {equation_reasoning.get('reasoning_answer', 'NA')}｜結論 {equation_reasoning.get('conclusion', '')}",
         f"- 危機/轉機: {interface.get('label', '資料不足')}｜{interface.get('interface_state', 'NA')}｜峰谷 {_top_text(interface.get('peak_valley_signals'), 2)}",
         f"- 健康/風險: 健康 {num(health_score)} / 100（{health_label}）；風險 {num(risk_value)} / 100；健康價值 {health_value.get('label', '資料不足')} / {health_value.get('value', 'NA')}",
         f"- 崩盤核對: {confirmation.get('stage', '資料不足')}｜假崩盤 {false_crash.get('label', '資料不足')}｜SOP {state_sop.get('state_gua', 'NA')}/{state_sop.get('sop', '資料不足')}",
@@ -11373,7 +11375,7 @@ def render_compact_brief_forecast(payload: dict) -> str:
         f"- 日盤戰術: {intraday.get('label', '資料不足')}｜{intraday.get('summary', '')}｜動作 {intraday.get('action', 'NA')}",
         f"- 外部/跨盤: {cross_market.get('label', '資料不足')}｜{cross_market.get('summary', '')}｜{_top_text(cross_market.get('evidence'), 3)}",
         f"- 基本面命格: {fundamental.get('label', '資料不足')}｜{fundamental.get('score', 'NA')}/100｜支撐 {_top_text(fundamental.get('drivers'), 2)}｜壓力 {_top_text(fundamental.get('pressures'), 2)}",
-        f"- 技術/卦位答案: {technical_equation.get('answer', '資料不足')}｜分數 {technical_equation.get('score', 'NA')}｜最可信公式 {technical_equation.get('best_formula', 'NA')} / {technical_equation.get('best_formula_answer', 'NA')}｜算式: 主卦 {primary.get('gua')} / {primary.get('label')}；月週日 {monthly.get('gua')} / {weekly.get('gua')} / {daily.get('gua')}；技術段位 {technical.get('label', '資料不足')}",
+        f"- 技術/卦位答案: {technical_equation.get('answer', '資料不足')}｜狀態 {technical_equation.get('research_status', 'experimental_hypothesis')}｜分數 {technical_equation.get('score', 'NA')}｜最可信公式 {technical_equation.get('best_formula', 'NA')} / {technical_equation.get('best_formula_answer', 'NA')}｜算式: 主卦 {primary.get('gua')} / {primary.get('label')}；月週日 {monthly.get('gua')} / {weekly.get('gua')} / {daily.get('gua')}；技術段位 {technical.get('label', '資料不足')}",
         f"- 公式推理驗證: 同向 {_top_text(equation_reasoning.get('agreements'), 2)}｜衝突 {_top_text(equation_reasoning.get('conflicts'), 2, '無重大衝突')}｜下一步 {_top_text(equation_reasoning.get('next_checks'), 2)}",
         f"- 公式誤差追因: {_top_text(equation_reasoning.get('error_sources'), 2, '暫無重大公式衝突')}｜待補變數 {_top_text(equation_reasoning.get('missing_variables'), 2, '目前無立即缺口')}｜數學策略 {equation_reasoning.get('math_policy', '先補變數再升級數學')}",
         f"- 買賣行為對比: {state_trade.get('gua', 'NA')}/{state_trade.get('label', '資料不足')}；買方 {state_trade.get('buy_behavior', '')}；賣方 {state_trade.get('sell_behavior', '')}",
