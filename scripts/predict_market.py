@@ -10842,7 +10842,124 @@ def render_breath_monitor(payload: dict) -> str:
     return html
 
 
+def _top_text(items, limit: int = 3, default: str = "NA") -> str:
+    values = [str(item) for item in (items or []) if str(item).strip()]
+    return "；".join(values[:limit]) if values else default
+
+
+def _compact_vitals(stethoscope: dict, limit: int = 5) -> str:
+    vitals = []
+    for item in stethoscope.get("diagnostics", [])[:limit]:
+        name = item.get("name")
+        label = item.get("label")
+        if name or label:
+            vitals.append(f"{name or 'NA'}/{label or 'NA'}")
+    return "；".join(vitals) if vitals else "NA"
+
+
+def render_compact_brief_forecast(payload: dict) -> str:
+    check = payload["index_check"]
+    date_audit = payload.get("market_date_audit", {})
+    freshness = payload["data_freshness"]
+    intraday = payload.get("intraday_tactical_monitor", {})
+    satellite = payload.get("weather_satellite_forecast", {})
+    zero_one_tilt = satellite.get("zero_one_tilt", {})
+    night_trend = satellite.get("night_trend", {})
+    arbitration = payload.get("master_arbitration", {})
+    practical = payload.get("practical_cause_arbitration", {})
+    stethoscope = payload.get("market_stethoscope", {})
+    protection = payload.get("market_protection_layers", {})
+    interface = payload.get("crisis_opportunity_interface", {})
+    cross_market = payload.get("cross_market_entanglement", {})
+    fundamental = payload.get("fundamental_constitution", {})
+    reliability = payload.get("direction_reliability_policy", {})
+    bagua = payload["bagua_lifecycle"]
+    technical = payload["technical_phase"]
+    crash = payload["crash_monitor"]
+    market_health = payload.get("market_health", {})
+    health_value = market_health.get("health_value", {})
+    close_cause = payload.get("close_cause_attribution", {})
+    capital = payload.get("capital_flow", {})
+    psychological_warfare = payload.get("psychological_warfare_pattern", {})
+    day_night_variance = payload.get("day_night_variance_pattern", {})
+    next_day_validation = payload.get("error_review", {}).get("next_day_validation", {})
+    summary = payload["integrated_summary"]
+    policy = payload["production_policy"]
+
+    primary = bagua.get("primary", {})
+    monthly = bagua.get("monthly", {})
+    weekly = bagua.get("weekly", {})
+    daily = bagua.get("daily", {})
+    health_score = crash.get("health_score", market_health_score(crash))
+    risk_value = crash.get("risk_value")
+    health_label = crash.get("health_label") or market_health_label(health_score, crash.get("alert_code"))
+    confirmation = crash.get("confirmation", {})
+    false_crash = crash.get("false_crash_filter", {})
+    state_sop = crash.get("state_sop", {})
+    root_cause_items = satellite.get("root_cause_decomposition", {}).get("items", [])
+    primary_root_cause = root_cause_items[0] if root_cause_items else {}
+    state_trade = bagua.get("roles", {}).get("state_gua", {}).get("trade_annotation") or bagua_trade_annotation(primary.get("code"))
+
+    defense_levels = format_levels(intraday.get("defense_levels", [])) or "NA"
+    reclaim_levels = format_levels(intraday.get("reclaim_levels", [])) or "NA"
+    capital_text = (
+        capital.get("summary")
+        or capital.get("headline")
+        or ("資料已接入" if capital.get("has_factor_values") else "資料缺口，僅作保守觀察")
+    )
+
+    lines = [
+        f"# 台股大盤重點報告（{payload['input']['date']}）",
+        "",
+        f"# 0/1走向重點：{zero_one_tilt.get('label', '資料不足')}",
+        f"**{zero_one_tilt.get('summary', summary.get('bias_text', '資料不足'))}**",
+        f"- 偏向分數: {zero_one_tilt.get('score', 'NA')}；分支 {zero_one_tilt.get('branch', 'NA')}",
+        f"- 有利證據: {_top_text(zero_one_tilt.get('evidence'), 3)}",
+        f"- 反證條件: {_top_text(zero_one_tilt.get('counter_conditions'), 3)}",
+        f"- 關鍵線: 防守 {defense_levels}；轉強 {reclaim_levels}",
+        "",
+        "# 核心判斷",
+        f"- 下一步: {satellite.get('headline', '資料不足')}｜{satellite.get('next_step', '')}",
+        f"- 總仲裁: {arbitration.get('headline', '資料不足')}｜{arbitration.get('risk_posture', 'NA')}｜主控 {arbitration.get('dominant_layer', 'NA')}",
+        f"- 防呆保護: {protection.get('label', '資料不足')}｜分數 {protection.get('score', 'NA')}｜失效層 {_top_text(protection.get('failed_layers'), 3, '尚未見失效')}",
+        f"- 危機/轉機: {interface.get('label', '資料不足')}｜{interface.get('interface_state', 'NA')}｜峰谷 {_top_text(interface.get('peak_valley_signals'), 2)}",
+        f"- 健康/風險: 健康 {num(health_score)} / 100（{health_label}）；風險 {num(risk_value)} / 100；健康價值 {health_value.get('label', '資料不足')} / {health_value.get('value', 'NA')}",
+        f"- 崩盤核對: {confirmation.get('stage', '資料不足')}｜假崩盤 {false_crash.get('label', '資料不足')}｜SOP {state_sop.get('state_gua', 'NA')}/{state_sop.get('sop', '資料不足')}",
+        "",
+        "# 證據分層",
+        f"- 夜盤: {night_trend.get('label', '資料不足')}｜官方 {pct(night_trend.get('official_spread_per'))}；開收 {pct(night_trend.get('open_close_return'))}；前夜 {pct(night_trend.get('previous_night_close_return'))}；收 {num(night_trend.get('close'))}；低 {num(night_trend.get('low'))}；{night_trend.get('path_shape', '')}",
+        f"- 日盤戰術: {intraday.get('label', '資料不足')}｜{intraday.get('summary', '')}｜動作 {intraday.get('action', 'NA')}",
+        f"- 外部/跨盤: {cross_market.get('label', '資料不足')}｜{cross_market.get('summary', '')}｜{_top_text(cross_market.get('evidence'), 3)}",
+        f"- 基本面命格: {fundamental.get('label', '資料不足')}｜{fundamental.get('score', 'NA')}/100｜支撐 {_top_text(fundamental.get('drivers'), 2)}｜壓力 {_top_text(fundamental.get('pressures'), 2)}",
+        f"- 技術/卦位: 主卦 {primary.get('gua')} / {primary.get('label')}；月週日 {monthly.get('gua')} / {weekly.get('gua')} / {daily.get('gua')}；技術段位 {technical.get('label', '資料不足')}",
+        f"- 買賣行為對比: {state_trade.get('gua', 'NA')}/{state_trade.get('label', '資料不足')}；買方 {state_trade.get('buy_behavior', '')}；賣方 {state_trade.get('sell_behavior', '')}",
+        f"- 籌碼/量能: {capital_text}",
+        f"- 市場心跳: {stethoscope.get('label', '資料不足')}｜分數 {stethoscope.get('score', 'NA')}｜{_compact_vitals(stethoscope)}",
+        f"- 人性/兵法: {psychological_warfare.get('label', '資料不足')}｜戰術 {psychological_warfare.get('tactic_candidate', 'NA')}｜{_top_text(psychological_warfare.get('cause_effect_chain'), 2)}",
+        f"- 日夜盤變異: {day_night_variance.get('label', '資料不足')}｜{day_night_variance.get('relation_label', 'unknown')}｜{_top_text(day_night_variance.get('cause_candidates'), 2)}",
+        f"- 實務病因: {practical.get('label', '資料不足')}｜即效藥 {practical.get('fact_changing_medicine', {}).get('label', 'NA')}｜主因 {_top_text(practical.get('internal_causes'), 3)}｜觸發 {_top_text(practical.get('external_triggers'), 3)}",
+        f"- 漲跌歸因: {close_cause.get('label', '資料不足')}｜{close_cause.get('headline', '')}｜{_top_text(close_cause.get('cause_candidates'), 3)}",
+        "",
+        "# 驗證與留底",
+        f"- 下個驗證: {_top_text(satellite.get('route_checks') or interface.get('watch_points'), 4)}",
+        f"- 誤差檢討: {next_day_validation.get('headline', '尚無到期預測可驗證')}｜{next_day_validation.get('governance', '只做核對，不自動升級為投資命令')}",
+        f"- 模型可靠度: {reliability.get('headline', '資料不足')}｜整體 {pct(reliability.get('overall_hit_rate'))}；近10筆 {pct(reliability.get('recent_10_hit_rate'))}；近30筆 {pct(reliability.get('recent_30_hit_rate'))}",
+        f"- 資料時點: 報告日 {payload['input']['date']}；分析基準日 {check['signal_date']}；資料狀態 {freshness_status_text(freshness['overall_status'])}；日期稽核 {date_audit.get('label', '資料不足')}",
+        f"- 正式方向訊號: {'啟用' if policy['main_multi_day_direction']['enabled'] else '停用；以下為研究判讀'}",
+        "- 細節留底: `reports/today_market_forecast_detail.md`；完整資料: `reports/today_market_forecast.json`",
+        "- 防呆: 本報告只做風險預警、0/1劇本與驗證重點，不產生投資命令。",
+        "",
+        "## 一句話",
+        f"**{summary.get('bias_text', '資料不足')}。{summary.get('plain_summary', '')}**",
+    ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def render_brief_forecast(payload: dict) -> str:
+    return render_compact_brief_forecast(payload)
+
+
+def render_verbose_brief_forecast_legacy(payload: dict) -> str:
     check = payload["index_check"]
     date_audit = payload.get("market_date_audit", {})
     mode_switch = payload.get("market_mode_switch", {})
