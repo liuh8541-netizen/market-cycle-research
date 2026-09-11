@@ -335,6 +335,8 @@ def main() -> None:
     payload["market_health"] = build_market_health_assessment(payload)
     payload["fundamental_constitution"] = analyze_fundamental_constitution(payload)
     payload["practical_cause_arbitration"] = analyze_practical_cause_arbitration(payload)
+    payload["market_protection_layers"] = analyze_market_protection_layers(payload)
+    payload["crisis_opportunity_interface"] = analyze_crisis_opportunity_interface(payload)
     payload["cross_market_entanglement"] = analyze_cross_market_entanglement(payload)
     payload["master_arbitration"] = analyze_master_arbitration(payload)
     payload["weather_satellite_forecast"] = build_weather_satellite_forecast_model(payload)
@@ -3636,6 +3638,400 @@ def analyze_practical_cause_arbitration(payload: dict) -> dict:
         "gene_trigger_model": "病灶基因=高檔估值、前高套牢、融資追價、權值過熱、族群分化等長期內部條件；觸發條件=美股、油價、利率、新聞、夜盤、開盤缺口等不定期開關。",
         "model_effect": "原因歸因先建立長期存在的病灶基因，再判斷今日外部事件是否觸發發作；避免每天用不同新聞重寫主因。",
         "guardrail": "實務主因仲裁只做風險與病因排序，不證明單一主體操控，也不產生投資命令。",
+    }
+
+
+def analyze_market_protection_layers(payload: dict) -> dict:
+    """Diagnose whether the market's self-protection layers are still working."""
+    crash = payload.get("crash_monitor", {})
+    health = payload.get("market_health", {})
+    health_value = health.get("health_value", {})
+    diagnosis = health.get("diagnosis", {})
+    intraday = payload.get("intraday_tactical_monitor", {})
+    stethoscope = payload.get("market_stethoscope", {})
+    practical = payload.get("practical_cause_arbitration", {})
+    fundamental = payload.get("fundamental_constitution", {})
+    external = payload.get("external_event_reset_monitor", {})
+    day_night = payload.get("day_night_variance_pattern", {})
+    cross_market = payload.get("cross_market_entanglement", {})
+    close_cause = payload.get("close_cause_attribution", {})
+
+    risk_value = safe_float(crash.get("risk_value")) or 0.0
+    health_score = safe_float(crash.get("health_score")) or 0.0
+    close = safe_float(crash.get("close"))
+    low = safe_float(crash.get("low") or crash.get("effective_low"))
+    levels = crash.get("levels", {})
+    normal_gen_low = safe_float(levels.get("normal_gen_low"))
+    normal_gen_high = safe_float(levels.get("normal_gen_high"))
+    normal_bottom_low = safe_float(levels.get("normal_bottom_low"))
+    crash_warning = safe_float(levels.get("crash_warning"))
+    fundamental_score = safe_float(fundamental.get("score"))
+    stethoscope_score = safe_int(stethoscope.get("score"), 0)
+    practical_phase = safe_int(practical.get("treatment_phase"), 0)
+    external_score = safe_int(external.get("reset_score"), 0)
+    cross_score = safe_int(cross_market.get("score"), 0)
+
+    layers: list[dict] = []
+
+    def add_layer(name: str, state: str, score: int, evidence: str, failure: str) -> None:
+        labels = {
+            "active": "啟動/有效",
+            "watch": "觀察",
+            "warning": "偏弱",
+            "failed": "失效警戒",
+        }
+        layers.append(
+            {
+                "name": name,
+                "state": state,
+                "label": labels.get(state, state),
+                "score": score,
+                "evidence": evidence,
+                "failure_condition": failure,
+            }
+        )
+
+    if crash.get("alert_code") in {"red", "crash_warning"} or risk_value >= 75:
+        add_layer(
+            "價格線防呆",
+            "failed",
+            -3,
+            "風險紅線或崩盤前奏條件已接近成立，價格防線失靈風險升高。",
+            "跌破合理底或崩盤線且收盤、連續收盤都收不回。",
+        )
+    elif low is not None and normal_gen_low is not None and low < normal_gen_low and close is not None and close >= normal_gen_low:
+        add_layer(
+            "價格線防呆",
+            "active",
+            2,
+            "盤中刺破高檔正常艮區下緣後收回，代表防線有被測試並暫時守住。",
+            "隔日再破今日低點且收不回。",
+        )
+    elif close is not None and normal_gen_low is not None and normal_gen_high is not None and normal_gen_low <= close <= normal_gen_high:
+        add_layer(
+            "價格線防呆",
+            "active",
+            2,
+            "收盤仍在高檔正常艮區，屬臨界壓測但未跌入重大修正區。",
+            "收盤跌出高檔正常艮區，且無法快速站回。",
+        )
+    elif close is not None and normal_bottom_low is not None and close > normal_bottom_low:
+        add_layer(
+            "價格線防呆",
+            "watch",
+            0,
+            "尚未接近合理底失守，價格防線仍需用下一交易日確認。",
+            "跌破合理底部區下緣且收不回。",
+        )
+    else:
+        add_layer(
+            "價格線防呆",
+            "warning",
+            -1,
+            "價格資料不足或已偏離正常防守區，需保守看待。",
+            "資料補齊後若仍破線，升級為失效警戒。",
+        )
+
+    if health_score >= 65 and risk_value < 50 and not health_value.get("controllable_risk", True):
+        add_layer(
+            "資金承接防呆",
+            "watch",
+            0,
+            "健康分數仍高但健康價值判斷已轉風險升溫，代表有承接但不可放鬆。",
+            "承接量縮、族群廣度惡化、期現同步破位。",
+        )
+    elif health_score >= 65 and risk_value < 45:
+        add_layer(
+            "資金承接防呆",
+            "active",
+            2,
+            "健康分數高且風險值未升高，市場仍有自我承接能力。",
+            "健康指數跌破30或風險值升破75。",
+        )
+    elif risk_value >= 60:
+        add_layer(
+            "資金承接防呆",
+            "warning",
+            -2,
+            "風險值升高，承接防呆可能轉為被動止血。",
+            "放量收低且隔日續破。",
+        )
+    else:
+        add_layer(
+            "資金承接防呆",
+            "watch",
+            0,
+            "承接力尚需由量能、族群廣度與期現差補證。",
+            "反彈無量、下跌放量且收近低。",
+        )
+
+    if stethoscope_score <= -5 or diagnosis.get("primary") == "deteriorating":
+        add_layer(
+            "心理嚇阻防呆",
+            "warning",
+            -2,
+            "生命徵象偏混合或轉弱，恐慌與壓低測底正在提高。",
+            "跌破關鍵線後不再快速收回，恐慌由試探轉成連鎖。",
+        )
+    elif day_night.get("score", 0) >= 0:
+        add_layer(
+            "心理嚇阻防呆",
+            "active",
+            1,
+            "日夜盤沒有同步惡化，壓測仍可能被收盤裁判吸收。",
+            "夜盤偏空被日盤現貨確認且連續收不回。",
+        )
+    else:
+        add_layer(
+            "心理嚇阻防呆",
+            "watch",
+            0,
+            "心理層仍在多空拉鋸，需看空方壓線是否反被回補牽制。",
+            "空方壓線成功且多方不再守線。",
+        )
+
+    if external.get("reset_active") and external.get("direction") == "bearish" and cross_score <= -4:
+        add_layer(
+            "跨盤/制度風控防呆",
+            "warning",
+            -2,
+            "外部重置與跨盤偏空接近共振，制度與保證金風控容易放大波動。",
+            "美股、台指夜盤、日盤現貨同步破位。",
+        )
+    elif practical_phase >= 4:
+        add_layer(
+            "跨盤/制度風控防呆",
+            "failed",
+            -3,
+            "模型已進入急症風控，制度性賣壓或連鎖保證金壓力需優先處理。",
+            "急症風控後仍連續破線收不回。",
+        )
+    else:
+        add_layer(
+            "跨盤/制度風控防呆",
+            "watch",
+            0,
+            "目前仍是外部壓力與內部承接的拉鋸，尚未見制度層失序證據。",
+            "期現同步失衡、波動擴大、成交流動性明顯惡化。",
+        )
+
+    if close is not None and crash_warning is not None and close <= crash_warning:
+        add_layer(
+            "政策底線防呆",
+            "failed",
+            -3,
+            "收盤接近或跌破崩盤前奏線，才進入政策底線觀察。",
+            "政策或市場穩定工具出現後仍無法止穩。",
+        )
+    elif risk_value >= 75:
+        add_layer(
+            "政策底線防呆",
+            "warning",
+            -2,
+            "風險值已達高警戒，政策底線需列入觀察但不可假設必然出手。",
+            "風險值高檔且連續收不回關鍵線。",
+        )
+    else:
+        add_layer(
+            "政策底線防呆",
+            "watch",
+            0,
+            "目前離崩盤前奏線仍遠，未達政策級保護機制啟動條件。",
+            "跌破38,575或合理底失守後連續收不回。",
+        )
+
+    if fundamental_score is not None and fundamental_score >= 60:
+        add_layer(
+            "基本面體質防呆",
+            "active",
+            2,
+            "基本面命格仍屬體質尚穩，表示市場不是單靠情緒在硬撐。",
+            "AI/半導體、匯率、資金環境或獲利預期同步轉弱。",
+        )
+    elif fundamental_score is not None and fundamental_score < 45:
+        add_layer(
+            "基本面體質防呆",
+            "warning",
+            -2,
+            "基本面命格偏弱，價格防線一旦破裂容易延長修正。",
+            "基本面壓力與價格破線同時成立。",
+        )
+    else:
+        add_layer(
+            "基本面體質防呆",
+            "watch",
+            0,
+            "基本面資料不足或未形成明確支撐，需要外部市場與族群資料補證。",
+            "資料補齊後若命格分數續降，保護層降級。",
+        )
+
+    score = sum(safe_int(layer.get("score"), 0) for layer in layers)
+    failed = [layer for layer in layers if layer["state"] == "failed"]
+    warnings = [layer for layer in layers if layer["state"] == "warning"]
+    active = [layer for layer in layers if layer["state"] == "active"]
+
+    if failed or score <= -5:
+        label = "保護層失靈警戒"
+        summary = "市場自我防呆已有失靈風險；需優先核對破線、收盤破與連續收不回。"
+        posture = "crisis_watch"
+    elif len(warnings) >= 2 or score <= -1:
+        label = "保護層偏弱拉鋸"
+        summary = "防呆層仍在，但價格、心理或跨盤壓力正在測試承接極限。"
+        posture = "defensive_watch"
+    elif len(active) >= 3 and score >= 4:
+        label = "保護層有效"
+        summary = "價格、資金或基本面防線仍有效；目前偏合理壓測，不是崩盤確認。"
+        posture = "reasonable_volatility"
+    else:
+        label = "保護層觀察中"
+        summary = "多數保護層尚未失靈，但仍需下一交易日與收盤確認。"
+        posture = "watch"
+
+    if close is not None and normal_gen_low is not None and close >= normal_gen_low and risk_value < 50:
+        current_judgment = "尚屬高檔合理壓測，但已啟動臨界防守觀察。"
+    elif warnings and not failed:
+        current_judgment = "不是崩盤確認，是防呆層偏弱的拉鋸狀態。"
+    else:
+        current_judgment = "需等盤中低點、收盤與連續性確認後再定性。"
+
+    return {
+        "framework": "market_protection_layers_v1",
+        "label": label,
+        "score": score,
+        "posture": posture,
+        "summary": summary,
+        "current_judgment": current_judgment,
+        "active_layers": [layer["name"] for layer in active],
+        "warning_layers": [layer["name"] for layer in warnings],
+        "failed_layers": [layer["name"] for layer in failed],
+        "layers": layers,
+        "crisis_conditions": [
+            "價格防線跌破且收盤收不回。",
+            "期現同步破位，逆價差或避險壓力擴大。",
+            "權值股、族群廣度、成交量同時惡化。",
+            "外部事件重置連續發作且日盤無法吸收。",
+            "政策或制度層被迫接手後仍無法止穩。",
+        ],
+        "duration_rule": "影響期限 = 病灶深度 + 觸發強度 - 日盤吸收力 + 復發次數。",
+        "guardrail": "市場防呆只判斷保護層是否失靈；不證明單一主體操控，不產生投資命令。",
+        "source_links": {
+            "practical_cause": practical.get("framework"),
+            "stethoscope": stethoscope.get("framework"),
+            "crash_monitor": crash.get("enabled"),
+            "close_cause": close_cause.get("framework"),
+        },
+    }
+
+
+def analyze_crisis_opportunity_interface(payload: dict) -> dict:
+    """Locate the boundary where crisis risk can turn into repair evidence."""
+    crash = payload.get("crash_monitor", {})
+    protection = payload.get("market_protection_layers", {})
+    intraday = payload.get("intraday_tactical_monitor", {})
+    practical = payload.get("practical_cause_arbitration", {})
+    health = payload.get("market_health", {})
+    health_value = health.get("health_value", {})
+    stethoscope = payload.get("market_stethoscope", {})
+    day_night = payload.get("day_night_variance_pattern", {})
+    technical = payload.get("technical_phase", {})
+    peak_warning = payload.get("peak_to_valley_warning", {})
+    washout = payload.get("washout_pattern", {})
+    candle = payload.get("candlestick_pattern", {})
+
+    levels = crash.get("levels", {})
+    close = safe_float(crash.get("close"))
+    low = safe_float(crash.get("low") or crash.get("effective_low"))
+    risk_value = safe_float(crash.get("risk_value")) or 0.0
+    health_score = safe_float(crash.get("health_score")) or 0.0
+    normal_gen_low = safe_float(levels.get("normal_gen_low"))
+    normal_gen_high = safe_float(levels.get("normal_gen_high"))
+    normal_bottom_low = safe_float(levels.get("normal_bottom_low"))
+    crash_warning = safe_float(levels.get("crash_warning"))
+    ma20 = safe_float(technical.get("levels", {}).get("ma20"))
+    defense_levels = [x for x in intraday.get("defense_levels", []) if x is not None]
+    reclaim_levels = [x for x in intraday.get("reclaim_levels", []) if x is not None]
+
+    crisis_edge: list[str] = []
+    opportunity_edge: list[str] = []
+    user_actions: list[str] = []
+    watch_points: list[str] = []
+
+    if normal_gen_low is not None:
+        crisis_edge.append(f"高檔正常艮區下緣 {num(normal_gen_low)}：跌破收不回，代表合理呼吸轉臨界壓測。")
+        opportunity_edge.append(f"守住或站回 {num(normal_gen_low)}：代表價格線防呆尚未失靈。")
+    if normal_gen_high is not None:
+        opportunity_edge.append(f"站回高檔正常艮區上緣 {num(normal_gen_high)}：代表防守轉修復的第一層證據。")
+    if ma20 is not None:
+        opportunity_edge.append(f"收復20日線 {num(ma20)}：技術修復可信度提高。")
+    if normal_bottom_low is not None:
+        crisis_edge.append(f"合理底下緣 {num(normal_bottom_low)}：跌破且收不回，進入重大破底核對。")
+    if crash_warning is not None:
+        crisis_edge.append(f"崩盤前奏線 {num(crash_warning)}：跌破後需啟動盤中破、收盤破、連續收不回三重核對。")
+    if defense_levels:
+        watch_points.append("防守觀察: " + " / ".join(num(x) for x in defense_levels[:4]))
+    if reclaim_levels:
+        watch_points.append("轉強觀察: " + " / ".join(num(x) for x in reclaim_levels[:4]))
+
+    peak_valley_signals: list[str] = []
+    peak_label = peak_warning.get("label") or peak_warning.get("status") or "NA"
+    if peak_label != "NA":
+        peak_valley_signals.append(f"峰轉谷預警: {peak_label}。")
+    if candle.get("label"):
+        peak_valley_signals.append(f"K線轉折: {candle.get('label')}。")
+    if washout.get("label"):
+        peak_valley_signals.append(f"洗盤/谷底驗證: {washout.get('label')}。")
+    if protection.get("warning_layers"):
+        peak_valley_signals.append("保護層偏弱，峰轉谷候選需提高權重。")
+    if protection.get("active_layers") and not protection.get("failed_layers"):
+        peak_valley_signals.append("價格或基本面防呆仍有效，谷轉峰候選保留。")
+
+    if risk_value >= 75 or protection.get("failed_layers"):
+        interface_state = "危機端"
+        label = "危機端待急症核對"
+        summary = "保護層已有失效或風險紅線壓力；此時轉機必須先由收盤收回與連續修復證明。"
+    elif protection.get("warning_layers") and close is not None and normal_gen_low is not None and close >= normal_gen_low:
+        interface_state = "臨界線"
+        label = "危機/轉機交界"
+        summary = "市場正在臨界壓測：危機尚未確認，轉機也尚未完全成立，關鍵在守線與收復。"
+    elif health_score >= 65 and risk_value < 50:
+        interface_state = "轉機端"
+        label = "合理壓測轉修復候選"
+        summary = "健康分數與價格防線仍支撐市場，轉機候選存在，但需補收盤與族群擴散確認。"
+    else:
+        interface_state = "觀察線"
+        label = "界面觀察"
+        summary = "資料尚未形成單邊答案，先以關鍵線與保護層變化判斷。"
+
+    if close is not None and low is not None:
+        watch_points.append(f"今日收盤/低點: {num(close)} / {num(low)}")
+    watch_points.append(f"健康/風險: {num(health_score)} / {num(risk_value)}")
+    watch_points.append(f"防呆狀態: {protection.get('label', 'NA')}，失效層 {len(protection.get('failed_layers', []))}，偏弱層 {len(protection.get('warning_layers', []))}")
+    watch_points.append(f"日夜盤: {day_night.get('label', 'NA')}；實務主因: {practical.get('label', 'NA')}")
+
+    user_actions.extend(
+        [
+            "先標線：把防守線、轉強線、合理底與崩盤線列成固定觀測，不隨情緒移動。",
+            "等確認：盤中刺破不等於崩盤，收盤與連續收不回才升級。",
+            "分層處理：價格線守住看轉機，價格線破且族群/期現同步惡化看危機。",
+            "降雜訊：單一新聞只當觸發，不直接當主因；回到日盤現貨驗證。",
+            "寫病歷：每天把預判、實際、錯因、保護層變化留底，隔日驗證同類錯誤是否延續。",
+        ]
+    )
+    if not health_value.get("controllable_risk", True):
+        user_actions.append("可控風險已轉弱時，不把反彈直接視為安全，先看是否站回轉強線。")
+
+    return {
+        "framework": "crisis_opportunity_interface_v1",
+        "label": label,
+        "interface_state": interface_state,
+        "summary": summary,
+        "crisis_edge": crisis_edge,
+        "opportunity_edge": opportunity_edge,
+        "watch_points": watch_points,
+        "peak_valley_signals": unique_text(peak_valley_signals),
+        "what_i_can_do": user_actions,
+        "zero_one_rule": "0=危機被確認，保護層失效並進入三重核對；1=轉機被確認，守線後站回轉強線並由量能/族群補證。",
+        "guardrail": "本段回答危機與轉機的判斷界面及風控作業，不產生買賣命令。",
     }
 
 
@@ -10269,6 +10665,8 @@ def render_brief_forecast(payload: dict) -> str:
     arbitration = payload.get("master_arbitration", {})
     practical = payload.get("practical_cause_arbitration", {})
     stethoscope = payload.get("market_stethoscope", {})
+    protection = payload.get("market_protection_layers", {})
+    interface = payload.get("crisis_opportunity_interface", {})
     cross_market = payload.get("cross_market_entanglement", {})
     monthly_cycle = payload.get("monthly_cycle_monitor", {})
     summary = payload["integrated_summary"]
@@ -10348,6 +10746,23 @@ def render_brief_forecast(payload: dict) -> str:
         f"- 生命徵象: {'；'.join([d.get('name', '') + '/' + d.get('label', '') for d in stethoscope.get('diagnostics', [])[:6]]) or 'NA'}",
         f"- 缺口: {'；'.join(stethoscope.get('missing', [])) or '無重大缺口'}",
         f"- 規則: {stethoscope.get('rule', 'NA')}",
+        "",
+        f"# 市場防呆保護層：{protection.get('label', '資料不足')}｜分數 {protection.get('score', 'NA')}",
+        f"**{protection.get('current_judgment', protection.get('summary', ''))}**",
+        f"- 啟動層: {'；'.join(protection.get('active_layers', [])[:4]) or '無明確啟動'}",
+        f"- 偏弱層: {'；'.join(protection.get('warning_layers', [])[:4]) or '無明顯偏弱'}",
+        f"- 失效層: {'；'.join(protection.get('failed_layers', [])[:4]) or '尚未見失效'}",
+        f"- 危機條件: {'；'.join(protection.get('crisis_conditions', [])[:3]) or 'NA'}",
+        f"- 防呆: {protection.get('guardrail', '只判斷保護層是否失靈，不產生投資命令。')}",
+        "",
+        f"# 危機與轉機界面：{interface.get('label', '資料不足')}｜{interface.get('interface_state', 'NA')}",
+        f"**{interface.get('summary', '')}**",
+        f"- 危機邊界: {'；'.join(interface.get('crisis_edge', [])[:3]) or 'NA'}",
+        f"- 轉機邊界: {'；'.join(interface.get('opportunity_edge', [])[:3]) or 'NA'}",
+        f"- 峰谷信號: {'；'.join(interface.get('peak_valley_signals', [])[:4]) or 'NA'}",
+        f"- 觀測點: {'；'.join(interface.get('watch_points', [])[:4]) or 'NA'}",
+        f"- 我能做什麼: {'；'.join(interface.get('what_i_can_do', [])[:3]) or 'NA'}",
+        f"- 0/1規則: {interface.get('zero_one_rule', 'NA')}",
         "",
         f"# 跨盤糾結：{cross_market.get('label', '資料不足')}｜分數 {cross_market.get('score', 'NA')}",
         f"**{cross_market.get('summary', '')}**",
@@ -10836,6 +11251,8 @@ def render_forecast(payload: dict) -> str:
     lines.extend(render_fundamental_constitution_lines(payload.get("fundamental_constitution", {})))
     lines.extend(render_practical_cause_arbitration_lines(payload.get("practical_cause_arbitration", {})))
     lines.extend(render_market_stethoscope_lines(payload.get("market_stethoscope", {})))
+    lines.extend(render_market_protection_layers_lines(payload.get("market_protection_layers", {})))
+    lines.extend(render_crisis_opportunity_interface_lines(payload.get("crisis_opportunity_interface", {})))
     lines.extend(render_cross_market_entanglement_lines(payload.get("cross_market_entanglement", {})))
     lines.extend(render_master_arbitration_lines(payload.get("master_arbitration", {})))
     lines.extend(render_monthly_cycle_monitor_lines(payload.get("monthly_cycle_monitor", {})))
@@ -11519,6 +11936,72 @@ def render_market_stethoscope_lines(stethoscope: dict) -> list[str]:
         lines.extend(["", "### 待補資料"])
         for item in stethoscope.get("missing", []):
             lines.append(f"- {item}")
+    return lines
+
+
+def render_market_protection_layers_lines(protection: dict) -> list[str]:
+    if not protection:
+        return []
+    lines = [
+        "",
+        f"## 市場防呆保護層：{protection.get('label', '資料不足')}",
+        "",
+        f"- 框架: {protection.get('framework', 'market_protection_layers_v1')}",
+        f"- 總分: {protection.get('score', 'NA')}",
+        f"- 風控姿態: {protection.get('posture', 'NA')}",
+        f"- 目前判斷: {protection.get('current_judgment', protection.get('summary', ''))}",
+        f"- 結論: {protection.get('summary', '')}",
+        f"- 啟動層: {'；'.join(protection.get('active_layers', [])) or '無'}",
+        f"- 偏弱層: {'；'.join(protection.get('warning_layers', [])) or '無'}",
+        f"- 失效層: {'；'.join(protection.get('failed_layers', [])) or '無'}",
+        f"- 期限規則: {protection.get('duration_rule', '')}",
+        f"- 防呆: {protection.get('guardrail', '')}",
+    ]
+    if protection.get("layers"):
+        lines.extend(
+            [
+                "",
+                "| 保護層 | 狀態 | 分數 | 證據 | 失效條件 |",
+                "| --- | --- | ---: | --- | --- |",
+            ]
+        )
+        for layer in protection.get("layers", []):
+            lines.append(
+                f"| {layer.get('name')} | {layer.get('label')} | {layer.get('score')} | "
+                f"{layer.get('evidence')} | {layer.get('failure_condition')} |"
+            )
+    if protection.get("crisis_conditions"):
+        lines.extend(["", "### 危機升級條件"])
+        for item in protection.get("crisis_conditions", []):
+            lines.append(f"- {item}")
+    return lines
+
+
+def render_crisis_opportunity_interface_lines(interface: dict) -> list[str]:
+    if not interface:
+        return []
+    lines = [
+        "",
+        f"## 危機與轉機界面：{interface.get('label', '資料不足')}",
+        "",
+        f"- 框架: {interface.get('framework', 'crisis_opportunity_interface_v1')}",
+        f"- 界面狀態: {interface.get('interface_state', 'NA')}",
+        f"- 結論: {interface.get('summary', '')}",
+        f"- 0/1規則: {interface.get('zero_one_rule', '')}",
+        f"- 防呆: {interface.get('guardrail', '')}",
+    ]
+    for title, key in [
+        ("危機邊界", "crisis_edge"),
+        ("轉機邊界", "opportunity_edge"),
+        ("峰谷信號", "peak_valley_signals"),
+        ("觀測點", "watch_points"),
+        ("我能做什麼", "what_i_can_do"),
+    ]:
+        values = interface.get(key, [])
+        if values:
+            lines.extend(["", f"### {title}"])
+            for item in values:
+                lines.append(f"- {item}")
     return lines
 
 

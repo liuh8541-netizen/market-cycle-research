@@ -43,6 +43,15 @@
 
 ## 2026-09-11
 
+### 市場防呆保護層
+
+- `scripts/predict_market.py` 新增 `analyze_market_protection_layers`，把市場臨界保護機制正式模型化。
+- `scripts/predict_market.py` 新增 `analyze_crisis_opportunity_interface`，每日標示危機線、轉機線、峰谷信號與可執行的風控作業。
+- 六層檢查包含：價格線防呆、資金承接防呆、心理嚇阻防呆、跨盤/制度風控防呆、政策底線防呆、基本面體質防呆。
+- `reports/today_market_forecast.md` 新增「市場防呆保護層」與「危機與轉機界面」重點答案；detail 報告保留六層表格、證據、失效條件與峰谷界面。
+- 判讀語固定為：合理呼吸、臨界壓測、防呆偏弱、防呆失靈；目的在回答波動是否仍在可控制範圍，不產生投資命令。
+- `research/HUMAN_NATURE_CYCLE_FRAMEWORK.md`、`research/MODEL_IMPROVEMENT_ROADMAP_FROM_DIALOGUE.md` 與 `research/HANDOFF_CURRENT.md` 已同步補上此規則，確保跨電腦接續時不遺失。
+
 ### 對談觀察整理成模型改善手段
 
 - 新增 `research/MODEL_IMPROVEMENT_ROADMAP_FROM_DIALOGUE.md`，將使用者長期對談中累積的觀察整理為可實作規格。
