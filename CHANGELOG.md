@@ -1,5 +1,20 @@
 # 大盤週期研究變更紀錄
 
+## 2026-09-12
+
+### AI 濾波層與對談核心規則入模
+
+- `scripts/predict_market.py` 新增 `build_dialogue_core_rules`，把長期對談中反覆出現的核心觀念正式轉成模型規則。
+- 新增 `dialogue_core_rules_v1` 欄位：`chronic_conditions`、`trigger_conditions`、`transmission_checks`、`model_rules`、`report_policy`。
+- `analyze_practical_cause_arbitration` 會讀取對談核心規則，將「慢性病灶不會一天消失、單日劇變要找觸發鈕與倉位重定價、夜盤是前哨日盤是裁判」納入實務病因仲裁。
+- 主報告 `證據分層 / 實務病因` 改用 `dialogue_focus`，只輸出濾波後重點；細部推理保留在 JSON 與 detail。
+- `tests/test_production_validation_policy.py` 新增測試，確認慢性病灶與單日觸發會被分離，且模型規則要求主報告只輸出仲裁結果。
+
+### 驗證
+
+- `py -X utf8 -m py_compile scripts/predict_market.py` 通過。
+- `py -X utf8 -m unittest tests.test_production_validation_policy` 通過，64 tests OK。
+
 ## 2026-09-10
 
 ### Sponsor 資料源修正

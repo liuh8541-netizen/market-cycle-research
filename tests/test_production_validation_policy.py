@@ -33,6 +33,7 @@ from predict_market import (
     analyze_fundamental_constitution,
     analyze_master_arbitration,
     analyze_peak_to_valley_warning,
+    build_dialogue_core_rules,
     analyze_route_reference,
     analyze_sector_pressure_observation,
     analyze_situation_psychology_context,
@@ -416,6 +417,8 @@ class ProductionValidationPolicyTest(unittest.TestCase):
         self.assertEqual(practical["immediate_medicine_bias"], "neutral")
         self.assertIn("先有因", practical["causality_rule"])
         self.assertEqual([step["stage"] for step in practical["causality_pipeline"]], ["因", "跡象", "觸發按鈕", "果", "病歷"])
+        self.assertIn("dialogue_core_rules_v1", practical["dialogue_core_rules"]["framework"])
+        self.assertIn("單日變化", practical["dialogue_focus"])
 
     def test_practical_cause_arbitration_allows_external_reset_to_temporarily_lead(self):
         practical = analyze_practical_cause_arbitration(
@@ -443,6 +446,41 @@ class ProductionValidationPolicyTest(unittest.TestCase):
         self.assertEqual(practical["practical_primary"], "external_reset")
         self.assertEqual(practical["immediate_medicine_bias"], "weakening")
         self.assertLess(practical["immediate_medicine_score"], 0)
+
+    def test_dialogue_core_rules_filter_chronic_causes_from_daily_triggers(self):
+        rules = build_dialogue_core_rules(
+            {
+                "technical_phase": {
+                    "levels": {
+                        "close": 47183,
+                        "ma20": 45960,
+                        "drawdown_from_swing_high": -0.021,
+                        "range_20d": 0.076,
+                    }
+                },
+                "bagua_lifecycle": {"roles": {"background_gua": {"code": "QIAN"}}},
+                "sector_pressure_observation": {"risk_score": 3},
+                "capital_flow": {"score": -2},
+                "programmed_pressure_pattern": {"current_score": 2},
+                "premarket": {
+                    "tx_night_spread_per": -0.0041,
+                    "nasdaq_return_1d": -0.0064,
+                    "sox_return_1d": -0.012,
+                    "vix_return_1d": 0.047,
+                    "treasury_10y_return_1d": 0.0064,
+                },
+                "global_news_risk": {"net_risk_score": 2},
+                "external_event_reset_monitor": {"reset_active": False},
+                "day_night_variance_pattern": {"label": "待日盤驗證"},
+                "market_heart_rhythm": {"label": "生命徵象混合"},
+            }
+        )
+        self.assertEqual(rules["framework"], "dialogue_core_rules_v1")
+        self.assertEqual(rules["state"], "disease_with_trigger")
+        self.assertTrue(rules["chronic_conditions"])
+        self.assertTrue(rules["trigger_conditions"])
+        self.assertIn("觸發鈕", rules["focus"])
+        self.assertIn("報告只輸出仲裁結果", "；".join(rules["model_rules"]))
 
     def test_compact_forecast_record_persists_treatment_tracking_for_next_episode(self):
         payload = {

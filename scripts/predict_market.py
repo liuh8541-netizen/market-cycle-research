@@ -334,6 +334,7 @@ def main() -> None:
     payload["close_cause_attribution"] = analyze_close_cause_attribution(payload)
     payload["market_health"] = build_market_health_assessment(payload)
     payload["fundamental_constitution"] = analyze_fundamental_constitution(payload)
+    payload["dialogue_core_rules"] = build_dialogue_core_rules(payload)
     payload["practical_cause_arbitration"] = analyze_practical_cause_arbitration(payload)
     payload["market_protection_layers"] = analyze_market_protection_layers(payload)
     payload["crisis_opportunity_interface"] = analyze_crisis_opportunity_interface(payload)
@@ -3405,6 +3406,118 @@ def classify_fact_changing_medicines(payload: dict) -> dict:
     }
 
 
+def build_dialogue_core_rules(payload: dict) -> dict:
+    """Convert repeated research dialogue into reusable model rules."""
+    technical = payload.get("technical_phase", {})
+    levels = technical.get("levels", {})
+    bagua = payload.get("bagua_lifecycle", {})
+    sector = payload.get("sector_pressure_observation", {})
+    capital = payload.get("capital_flow", {})
+    programmed = payload.get("programmed_pressure_pattern", {})
+    premarket = payload.get("premarket", {})
+    news = payload.get("global_news_risk", {})
+    external = payload.get("external_event_reset_monitor", {})
+    day_night = payload.get("day_night_variance_pattern", {})
+    heart = payload.get("market_heart_rhythm", {})
+
+    chronic_conditions: list[str] = []
+    trigger_conditions: list[str] = []
+    transmission_checks: list[str] = []
+    model_rules: list[str] = []
+
+    close = safe_float(levels.get("close"))
+    ma20 = safe_float(levels.get("ma20"))
+    drawdown = safe_float(levels.get("drawdown_from_swing_high"))
+    range_20 = safe_float(levels.get("range_20d"))
+    sector_risk = safe_int(sector.get("risk_score"), 0)
+    capital_score = safe_int(capital.get("score"), 0)
+    pressure_score = safe_int(programmed.get("current_score"), 0)
+    night = safe_float(premarket.get("tx_night_spread_per"))
+    nasdaq = safe_float(premarket.get("nasdaq_return_1d"))
+    sox = safe_float(premarket.get("sox_return_1d"))
+    vix = safe_float(premarket.get("vix_return_1d"))
+    treasury_10y = safe_float(premarket.get("treasury_10y_return_1d"))
+    usd_twd = safe_float(premarket.get("usd_twd_return_1d"))
+    news_net = safe_int(news.get("net_risk_score"), 0)
+
+    if close is not None and ma20 is not None and close >= ma20:
+        chronic_conditions.append("高檔仍在短中期均線上，代表不是低位恐慌，而是高檔壓力測試。")
+    if drawdown is not None and drawdown >= -0.05:
+        chronic_conditions.append("距離波段高點仍近，前高套牢、獲利了結與追價退潮屬既有病灶。")
+    if range_20 is not None and range_20 >= 0.06:
+        chronic_conditions.append("近20日振幅偏大，表示換手、停損與壓力測試已累積。")
+    if bagua.get("roles", {}).get("background_gua", {}).get("code") in {"QIAN", "LI", "DUI"}:
+        chronic_conditions.append("背景卦在高位或極盛段，市場對利率、估值與權值過熱更敏感。")
+    if sector_risk >= 3:
+        chronic_conditions.append("族群分化偏高，指數表面強弱可能掩蓋內部退潮。")
+    if capital_score <= -2:
+        chronic_conditions.append("法人/期貨籌碼偏防守，代表倉位並非完全無壓。")
+    if pressure_score >= 2:
+        chronic_conditions.append("近期壓低行為群聚，單日下跌不可只用新聞解釋。")
+
+    if night is not None and abs(night) >= 0.003:
+        trigger_conditions.append(f"台指夜盤 {pct(night)}，期貨端先做預期重定價。")
+    if nasdaq is not None and abs(nasdaq) >= 0.006:
+        trigger_conditions.append(f"Nasdaq {pct(nasdaq)}，科技風險偏好被重新定價。")
+    if sox is not None and abs(sox) >= 0.01:
+        trigger_conditions.append(f"費半 {pct(sox)}，半導體權值預期被觸發。")
+    if vix is not None and abs(vix) >= 0.04:
+        trigger_conditions.append(f"VIX {pct(vix)}，避險程式可能調整倉位。")
+    if treasury_10y is not None and abs(treasury_10y) >= 0.004:
+        trigger_conditions.append(f"美債10年殖利率 {pct(treasury_10y)}，估值折現率被觸發重估。")
+    if usd_twd is not None and abs(usd_twd) >= 0.004:
+        trigger_conditions.append(f"美元/台幣 {pct(usd_twd)}，外資匯率風險被觸發重估。")
+    if news_net >= 2:
+        trigger_conditions.append("國際重大財經政治新聞偏風險，作為觸發鈕而非單獨主因。")
+    if external.get("reset_active"):
+        trigger_conditions.append(f"外部事件重置啟動，方向 {external.get('direction', 'unknown')}。")
+
+    transmission_checks.extend(
+        [
+            "夜盤只當前哨，日盤開盤、30～60分鐘收回、低點與收盤才是裁判。",
+            "若夜盤方向傳到日盤收盤，代表觸發被現貨承認；若日盤收回，代表只是避險或洗盤。",
+            "一天大變不是慢性病灶消失或生成，而是倉位、停損、避險與預期差重新定價。",
+        ]
+    )
+    model_rules.extend(
+        [
+            "先定病灶，再找觸發，再看日盤承認，最後寫入病歷。",
+            "新聞、油價、通膨、利率只能當觸發鈕；除非連續收盤與族群廣度確認，否則不得升級為主因。",
+            "0/1分流：1=觸發被吸收並修復；0=觸發被現貨確認並延伸成破線/回測。",
+            "報告只輸出仲裁結果；細部計算留在資料庫與 detail。",
+        ]
+    )
+
+    chronic_present = bool(chronic_conditions)
+    trigger_present = bool(trigger_conditions)
+    if chronic_present and trigger_present:
+        focus = "慢性病灶存在，單日變化主看觸發鈕與倉位重定價是否被日盤承認。"
+        state = "disease_with_trigger"
+    elif chronic_present:
+        focus = "慢性病灶存在，但今日缺少強觸發；以關鍵線與收盤位置等待發病或修復。"
+        state = "disease_without_trigger"
+    elif trigger_present:
+        focus = "觸發鈕存在，但慢性病灶不重；需防止把短線事件誤判成主趨勢。"
+        state = "trigger_without_disease"
+    else:
+        focus = "病灶與觸發都不強，維持心律與日夜盤傳導觀察。"
+        state = "no_strong_core"
+
+    return {
+        "framework": "dialogue_core_rules_v1",
+        "state": state,
+        "focus": focus,
+        "chronic_conditions": unique_text(chronic_conditions),
+        "trigger_conditions": unique_text(trigger_conditions),
+        "transmission_checks": transmission_checks,
+        "model_rules": model_rules,
+        "day_night_state": day_night.get("label", "資料不足"),
+        "heart_state": heart.get("label", "資料不足"),
+        "report_policy": "細部分析進資料庫與detail；主報告只輸出0/1、關鍵數字、核心病因、觸發與下一驗證。",
+        "guardrail": "對談規則是可驗證框架，不是投資命令，也不證明單一主體操控。",
+    }
+
+
 def analyze_practical_cause_arbitration(payload: dict) -> dict:
     """Separate persistent internal causes from irregular external triggers."""
     technical = payload.get("technical_phase", {})
@@ -3418,6 +3531,7 @@ def analyze_practical_cause_arbitration(payload: dict) -> dict:
     external = payload.get("external_event_reset_monitor", {})
     candle = payload.get("candlestick_pattern", {})
     programmed = payload.get("programmed_pressure_pattern", {})
+    dialogue = payload.get("dialogue_core_rules") or build_dialogue_core_rules(payload)
 
     internal_score = 0
     trigger_score = 0
@@ -3465,6 +3579,8 @@ def analyze_practical_cause_arbitration(payload: dict) -> dict:
         add_internal(1, "近期壓低群聚，顯示高檔壓力不是單日雜訊。")
     if close_position is not None and close_position <= 0.35:
         add_internal(1, "前一日收盤位置偏低，尾盤承接仍未完全證明。")
+    if dialogue.get("state") in {"disease_with_trigger", "disease_without_trigger"}:
+        add_internal(1, f"對談核心規則: {dialogue.get('focus')}")
 
     nasdaq = safe_float(premarket.get("nasdaq_return_1d"))
     sox = safe_float(premarket.get("sox_return_1d"))
@@ -3490,6 +3606,8 @@ def analyze_practical_cause_arbitration(payload: dict) -> dict:
         add_trigger(1, "台指期夜盤偏空，表示外部風險先在期貨端試壓。")
     if external.get("reset_active") and external.get("direction") == "bearish":
         add_trigger(3, "外部利空重置已啟動，短線可暫時接管風控優先權。")
+    if dialogue.get("state") in {"disease_with_trigger", "trigger_without_disease"}:
+        add_trigger(1, "對談核心規則: 單日劇變優先檢查觸發鈕、倉位重定價與日盤是否承認。")
 
     if internal_score >= 5 and trigger_score >= 2:
         code = "internal_disease_external_trigger"
@@ -3625,6 +3743,9 @@ def analyze_practical_cause_arbitration(payload: dict) -> dict:
         "medicine_effect": medicine_effect,
         "fact_changing_medicine": fact_medicine,
         "fact_changing_medicines": fact_medicine.get("medicines", []),
+        "dialogue_core_rules": dialogue,
+        "dialogue_rules_applied": top_items(dialogue.get("model_rules", []), 4),
+        "dialogue_focus": dialogue.get("focus"),
         "immediate_medicine_bias": fact_medicine.get("bias"),
         "immediate_medicine_score": fact_medicine.get("net_score"),
         "causality_pipeline": causality_pipeline,
@@ -11019,7 +11140,7 @@ def render_compact_brief_forecast(payload: dict) -> str:
         f"- 市場心跳: {stethoscope.get('label', '資料不足')}｜分數 {stethoscope.get('score', 'NA')}｜{_compact_vitals(stethoscope)}",
         f"- 人性/兵法: {psychological_warfare.get('label', '資料不足')}｜戰術 {psychological_warfare.get('tactic_candidate', 'NA')}｜{_top_text(psychological_warfare.get('cause_effect_chain'), 2)}",
         f"- 日夜盤變異: {day_night_variance.get('label', '資料不足')}｜{day_night_variance.get('relation_label', 'unknown')}｜{_top_text(day_night_variance.get('cause_candidates'), 2)}",
-        f"- 實務病因: {practical.get('label', '資料不足')}｜慢性病灶不會一天消失；單日劇變要看觸發鈕與倉位重定價｜即效藥 {practical.get('fact_changing_medicine', {}).get('label', 'NA')}｜主因 {_top_text(practical.get('internal_causes'), 3)}｜觸發 {_top_text(practical.get('external_triggers'), 3)}",
+        f"- 實務病因: {practical.get('label', '資料不足')}｜{practical.get('dialogue_focus', '慢性病灶不會一天消失；單日劇變要看觸發鈕與倉位重定價')}｜即效藥 {practical.get('fact_changing_medicine', {}).get('label', 'NA')}｜主因 {_top_text(practical.get('internal_causes'), 3)}｜觸發 {_top_text(practical.get('external_triggers'), 3)}",
         f"- 漲跌歸因: {close_cause.get('label', '資料不足')}｜{close_cause.get('headline', '')}｜{_top_text(close_cause.get('cause_candidates'), 3)}",
         "",
         "# 驗證與留底",
