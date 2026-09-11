@@ -10857,6 +10857,47 @@ def _compact_vitals(stethoscope: dict, limit: int = 5) -> str:
     return "；".join(vitals) if vitals else "NA"
 
 
+def _signed_points(value) -> str:
+    numeric = safe_float(value)
+    if numeric is None:
+        return "NA"
+    sign = "+" if numeric > 0 else ""
+    return f"{sign}{numeric:,.2f}"
+
+
+def _market_dashboard_lines(payload: dict, night_trend: dict, intraday: dict) -> list[str]:
+    check = payload["index_check"]
+    premarket = payload.get("premarket", {})
+    latest_tracking = payload.get("night_cash_tracking", {}).get("latest", {})
+    cash_close = safe_float(check.get("data_close"))
+    prior_close = safe_float(latest_tracking.get("prior_close"))
+    cash_change = cash_close - prior_close if cash_close is not None and prior_close is not None else None
+    cash_return = safe_float(latest_tracking.get("cash_close_return"))
+    cash_high = safe_float(latest_tracking.get("high"))
+    cash_low = safe_float(latest_tracking.get("low"))
+    cash_volume = safe_float(latest_tracking.get("volume"))
+    cash_volume_text = f"{cash_volume / 100000000:,.0f}億股" if cash_volume is not None else "NA"
+
+    night_open = safe_float(night_trend.get("open") or premarket.get("tx_night_open"))
+    night_high = safe_float(night_trend.get("high") or premarket.get("tx_night_high"))
+    night_low = safe_float(night_trend.get("low") or premarket.get("tx_night_low"))
+    night_close = safe_float(night_trend.get("close") or premarket.get("tx_night_close"))
+    night_volume = safe_float(premarket.get("night_path", {}).get("volume"))
+    night_volume_text = f"{night_volume:,.0f}口" if night_volume is not None else "NA"
+
+    basis = night_close - cash_close if night_close is not None and cash_close is not None else None
+    basis_pct = basis / cash_close if basis is not None and cash_close else None
+
+    return [
+        "# 市場儀表板",
+        f"- 台指期夜盤: {pct(night_trend.get('official_spread_per'))}，收 {num(night_close)}，低 {num(night_low)}，高 {num(night_high)}，開 {num(night_open)}，量 {night_volume_text}",
+        f"- 加權指數: 收 {num(cash_close)}，漲跌 {_signed_points(cash_change)}（{pct(cash_return)}），低 {num(cash_low)}，高 {num(cash_high)}，成交股數 {cash_volume_text}",
+        f"- 期現差: {num(basis)}（{pct(basis_pct)}）；夜盤收盤相對加權收盤",
+        f"- 關鍵線: 防守 {format_levels(intraday.get('defense_levels', [])) or 'NA'}；轉強 {format_levels(intraday.get('reclaim_levels', [])) or 'NA'}",
+        "",
+    ]
+
+
 def render_compact_brief_forecast(payload: dict) -> str:
     check = payload["index_check"]
     date_audit = payload.get("market_date_audit", {})
@@ -10918,6 +10959,7 @@ def render_compact_brief_forecast(payload: dict) -> str:
         f"- 反證條件: {_top_text(zero_one_tilt.get('counter_conditions'), 3)}",
         f"- 關鍵線: 防守 {defense_levels}；轉強 {reclaim_levels}",
         "",
+        *_market_dashboard_lines(payload, night_trend, intraday),
         "# 核心判斷",
         f"- 下一步: {satellite.get('headline', '資料不足')}｜{satellite.get('next_step', '')}",
         f"- 總仲裁: {arbitration.get('headline', '資料不足')}｜{arbitration.get('risk_posture', 'NA')}｜主控 {arbitration.get('dominant_layer', 'NA')}",
