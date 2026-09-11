@@ -44,6 +44,16 @@ function Invoke-CheckedPython {
     }
 }
 
+function Invoke-OptionalPython {
+    param([Parameter(Mandatory)][string[]]$Arguments)
+    try {
+        Invoke-CheckedPython $Arguments
+    }
+    catch {
+        "WARNING: optional diagnostic update failed: $($Arguments -join ' '): $($_.Exception.Message)" | Tee-Object -FilePath $logFile -Append
+    }
+}
+
 try {
     if ($now.DayOfWeek -in @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)) {
         $message = "Weekend: no market update was written."
@@ -71,6 +81,10 @@ try {
             Invoke-CheckedPython @("$projectDir\scripts\fetch_taifex_vix_daily.py", "--end-date", $officialDailyEnd)
             Invoke-CheckedPython @("$projectDir\scripts\fetch_finmind_futures_tick_bars.py", "--start-date", $now.AddDays(-7).ToString("yyyy-MM-dd"), "--end-date", $today)
             Invoke-CheckedPython @("$projectDir\scripts\build_night_microstructure_features.py")
+            if ($Phase -eq "Close") {
+                Invoke-OptionalPython @("$projectDir\scripts\fetch_finmind_taiex_early_pulse.py", "--start-date", $now.AddDays(-14).ToString("yyyy-MM-dd"), "--end-date", $today)
+                Invoke-OptionalPython @("$projectDir\scripts\fetch_finmind_market_cap_structure.py", "--start-date", $now.AddDays(-14).ToString("yyyy-MM-dd"), "--end-date", $today, "--workers", "2")
+            }
         }
         else {
             "FinMind token unavailable; continuing with public market sources." | Tee-Object -FilePath $logFile -Append
