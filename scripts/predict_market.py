@@ -10708,7 +10708,7 @@ def render_brief_forecast(payload: dict) -> str:
     primary_root_cause = root_cause_items[0] if root_cause_items else {}
 
     lines = [
-        "# 台股大盤重點報告",
+        f"# 台股大盤重點報告（{payload['input']['date']}）",
         "",
         f"# 氣象衛星式下一步預判：{satellite.get('headline', '資料不足')}",
         f"**{satellite.get('next_step', '')}**",
