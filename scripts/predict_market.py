@@ -6391,16 +6391,16 @@ def build_zero_one_directional_tilt(
     night_spread = safe_float(night_trend.get("official_spread_per"))
     night_close_position = safe_float(night_trend.get("close_position"))
     if night_spread is not None and night_spread >= 0.008:
-        add(2, f"夜盤官方漲幅 {pct(night_spread)}，前哨偏向修復。")
+        add(2, f"夜盤官方 {pct(night_spread)}，偏修復。")
     elif night_spread is not None and night_spread <= -0.008:
-        add(-2, f"夜盤官方跌幅 {pct(night_spread)}，前哨偏向測壓。")
+        add(-2, f"夜盤官方 {pct(night_spread)}，偏測壓。")
     elif night_spread is not None and abs(night_spread) < 0.003:
-        evidence.append("夜盤接近0%，前哨不給方向，日盤權重提高。")
+        evidence.append("夜盤近0%，日盤權重提高。")
 
     if night_close_position is not None and night_close_position >= 0.75:
-        add(1, "夜盤收在區間高檔，追價心理仍在。")
+        add(1, "夜盤收高檔，追價心理仍在。")
     elif night_close_position is not None and night_close_position <= 0.25:
-        add(-1, "夜盤收在區間低檔，避險壓力仍在。")
+        add(-1, "夜盤收低檔，避險壓力仍在。")
 
     if integrated.get("bias") == "bullish":
         add(1, "綜合訊號偏多。")
@@ -6410,10 +6410,10 @@ def build_zero_one_directional_tilt(
     if external_reset.get("reset_active") and external_reset.get("direction") == "bearish":
         add(-2, "外部利空重置啟動，偏向0/測壓。")
     elif external_reset.get("direction") == "mixed":
-        evidence.append("外部多空混合，降低單邊確定性。")
+        evidence.append("外部多空混合，單邊確定性下降。")
 
     if health_value.get("controllable_risk") is False:
-        add(-1, "健康價值判斷顯示風險不可完全放鬆。")
+        add(-1, "健康值轉謹慎，不能完全放鬆。")
     elif health_value.get("value") and safe_float(health_value.get("value")) >= 60:
         add(1, "健康價值仍支撐可控波動。")
 
@@ -6423,15 +6423,15 @@ def build_zero_one_directional_tilt(
     elif relation_code == "night_down_cash_reversal":
         add(2, "夜跌被日盤收回，偏向轉機。")
     elif relation_code == "pending_day_validation":
-        evidence.append("日盤尚未完成，0/1仍需地面站確認。")
+        evidence.append("日盤未完成，仍需現貨確認。")
 
     defense = format_levels(intraday.get("defense_levels", [])) or "NA"
     reclaim = format_levels(intraday.get("reclaim_levels", [])) or "NA"
     counter.extend(
         [
-            f"若跌破防守線 {defense} 且30～60分鐘收不回，偏向0/危機測壓。",
-            f"若站回轉強線 {reclaim} 且量能與族群不背離，偏向1/修復續攻。",
-            "若開高走低且收近低，夜盤偏多需降級為誘多或假突破。",
+            f"跌破防守 {defense} 且30～60分鐘收不回，轉0。",
+            f"站回轉強 {reclaim} 且量能/族群不背離，確認1。",
+            "開高走低且收近低，夜盤偏多降級為假突破。",
         ]
     )
 
@@ -10907,16 +10907,24 @@ def render_brief_forecast(payload: dict) -> str:
     primary_root_cause = root_cause_items[0] if root_cause_items else {}
     night_trend = satellite.get("night_trend", {})
     zero_one_tilt = satellite.get("zero_one_tilt", {})
+    tilt_evidence = zero_one_tilt.get("evidence", [])[:3]
+    tilt_counter = zero_one_tilt.get("counter_conditions", [])[:3]
 
     lines = [
         f"# 台股大盤重點報告（{payload['input']['date']}）",
+        "",
+        f"# 0/1走向重點：{zero_one_tilt.get('label', '資料不足')}",
+        f"**{zero_one_tilt.get('summary', '')}**",
+        f"- 偏向分數: {zero_one_tilt.get('score', 'NA')}；分支 {zero_one_tilt.get('branch', 'NA')}",
+        f"- 有利證據: {'；'.join(tilt_evidence) or 'NA'}",
+        f"- 反證條件: {'；'.join(tilt_counter) or 'NA'}",
+        f"- 關鍵線: 防守 {format_levels(intraday.get('defense_levels', [])) or 'NA'}；轉強 {format_levels(intraday.get('reclaim_levels', [])) or 'NA'}",
         "",
         f"# 氣象衛星式下一步預判：{satellite.get('headline', '資料不足')}",
         f"**{satellite.get('next_step', '')}**",
         f"- 預報框架: {satellite.get('framework', 'NA')}；信心 {satellite.get('confidence', '資料不足')}",
         f"- 信心範圍: {satellite.get('confidence_scope', '信心指整體日盤方向，不等於夜盤趨勢。')}",
         f"- 預測三層: {'；'.join(satellite.get('forecast_layers', [])[:3]) or 'NA'}",
-        f"- 0/1偏向: {zero_one_tilt.get('label', '資料不足')}；分數 {zero_one_tilt.get('score', 'NA')}；{zero_one_tilt.get('summary', '')}",
         f"- 夜盤趨勢: {night_trend.get('label', '資料不足')}；官方 {pct(night_trend.get('official_spread_per'))}；開收 {pct(night_trend.get('open_close_return'))}；前夜比較 {pct(night_trend.get('previous_night_close_return'))}；收 {num(night_trend.get('close'))}；低 {num(night_trend.get('low'))}；{night_trend.get('path_shape', '')}",
         f"- 觀測站: {'；'.join(satellite.get('route_checks', [])[:4]) or 'NA'}",
         f"- 風暴雲系: {'；'.join(satellite.get('storm_cells', [])[:3]) or '目前未見重大風暴雲系'}",
