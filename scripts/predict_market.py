@@ -341,6 +341,7 @@ def main() -> None:
     payload["cross_market_entanglement"] = analyze_cross_market_entanglement(payload)
     payload["master_arbitration"] = analyze_master_arbitration(payload)
     payload["weather_satellite_forecast"] = build_weather_satellite_forecast_model(payload)
+    payload["equation_reasoning_audit"] = build_equation_reasoning_audit(payload)
     payload["self_repair"] = build_self_repair_assessment(payload)
     payload["clinical_knowledge"] = update_clinical_knowledge(
         payload, ROOT / "research" / "market_health_knowledge"
@@ -7618,6 +7619,23 @@ def analyze_technical_phase(
             range_5d,
             range_20d,
         ),
+        "equation_answer": build_technical_equation_answer(
+            label,
+            bias,
+            monthly,
+            weekly,
+            daily,
+            cycle,
+            candle,
+            close,
+            ma,
+            below_ma,
+            broke_recent_low,
+            broke_recent_close,
+            drawdown_from_swing_high,
+            day_range_pct,
+            range_20d,
+        ),
         "alignment": forecast_alignment,
     }
 
@@ -7681,6 +7699,224 @@ def build_fixed_kline_formula(
             ),
         },
     ]
+
+
+def build_technical_equation_answer(
+    technical_label: str,
+    technical_bias: str,
+    monthly: dict,
+    weekly: dict,
+    daily: dict,
+    cycle: dict,
+    candle: dict,
+    close,
+    ma: dict,
+    below_ma: list[str],
+    broke_recent_low: bool,
+    broke_recent_close: bool,
+    drawdown_from_swing_high,
+    day_range_pct,
+    range_20d,
+) -> dict:
+    """Summarize which technical equation currently gives the clearest answer."""
+    equations: list[dict] = []
+
+    def add(name: str, score: int, answer: str, reason: str) -> None:
+        equations.append({"name": name, "score": score, "answer": answer, "reason": reason})
+
+    high_stage = {monthly.get("code"), weekly.get("code")} & {"QIAN", "LI", "DUI", "KUN"}
+    daily_code = daily.get("code")
+    if high_stage and daily_code in {"ZHEN", "DUI"}:
+        add(
+            "卦位方程式",
+            1,
+            "高位修復候選",
+            f"月週位於高檔/極盛，日線 {daily.get('gua')}/{daily.get('label')}，代表可修復但追價風險仍在。",
+        )
+    elif daily_code in {"KAN", "GEN"}:
+        add(
+            "卦位方程式",
+            -2,
+            "回測/築底候選",
+            f"日線 {daily.get('gua')}/{daily.get('label')}，短線仍需先確認止跌。",
+        )
+    else:
+        add(
+            "卦位方程式",
+            0,
+            "卦位中性待驗",
+            f"月週日 {monthly.get('gua')}/{weekly.get('gua')}/{daily.get('gua')} 未形成強單邊答案。",
+        )
+
+    ma20 = safe_float(ma.get("ma20"))
+    close_value = safe_float(close)
+    if len(below_ma) >= 3:
+        add("均線方程式", -3, "轉弱優先", f"收盤跌破 {len(below_ma)} 條均線，趨勢防線偏弱。")
+    elif close_value is not None and ma20 is not None and close_value >= ma20:
+        add("均線方程式", 2, "修復成立候選", "收盤站回20日線，技術修復得到均線支持。")
+    else:
+        add("均線方程式", 0, "均線未定", "均線沒有形成強多或強空答案。")
+
+    candle_type = candle.get("type")
+    close_position = safe_float(candle.get("close_position"))
+    if candle_type in {"long_bear", "gap_up_failed"} or (close_position is not None and close_position <= 0.25):
+        add("K線方程式", -2, "賣壓未解", f"K線 {candle.get('label')}，收盤位置偏低，需防續壓。")
+    elif candle_type in {"long_bull", "gap_down_reversal", "long_lower_shadow"} or (
+        close_position is not None and close_position >= 0.65
+    ):
+        add("K線方程式", 2, "承接修復", f"K線 {candle.get('label')}，收盤位置偏高，承接力較佳。")
+    else:
+        add("K線方程式", 0, "K線待驗", f"K線 {candle.get('label')} 未形成強確認。")
+
+    if broke_recent_low and broke_recent_close:
+        add("破線方程式", -3, "破底轉弱", "近期低點與低收盤同步失守，0劇本權重提高。")
+    elif broke_recent_low and not broke_recent_close:
+        add("破線方程式", 1, "刺破收回", "盤中破近期低點但收盤未破低收盤，屬轉機候選。")
+    else:
+        add("破線方程式", 1, "未破底", "近期低點/低收盤尚未同步失守，防線仍有效。")
+
+    if range_20d is not None and range_20d >= 0.08:
+        add("波動方程式", -1, "高波動降信心", f"20日震幅 {pct(range_20d)}，代表換手與洗盤頻繁，方向信心需降權。")
+    elif day_range_pct is not None and day_range_pct <= 0.008:
+        add("波動方程式", 0, "窄幅待變", f"單日震幅 {pct(day_range_pct)}，尚未表態。")
+    else:
+        add("波動方程式", 0, "波動中性", f"單日震幅 {pct(day_range_pct)}，20日震幅 {pct(range_20d)}。")
+
+    total_score = sum(item["score"] for item in equations)
+    winning = max(equations, key=lambda item: abs(item["score"])) if equations else {}
+
+    if total_score >= 3:
+        answer = "答案偏1：修復/續攻候選"
+        branch = "1"
+        summary = "多公式合成後偏向修復，但仍須日盤收盤與量能確認。"
+    elif total_score <= -3:
+        answer = "答案偏0：回測/轉弱候選"
+        branch = "0"
+        summary = "多公式合成後偏向回測或轉弱，需優先核對防守線。"
+    else:
+        answer = "答案未定：0/1拉鋸"
+        branch = "0/1"
+        summary = "各方程式互相抵銷，目前只能用關鍵線與下一根K線分流。"
+
+    return {
+        "framework": "technical_equation_answer_v1",
+        "answer": answer,
+        "branch": branch,
+        "score": total_score,
+        "best_formula": winning.get("name", "NA"),
+        "best_formula_answer": winning.get("answer", "NA"),
+        "best_formula_reason": winning.get("reason", "NA"),
+        "summary": summary,
+        "technical_label": technical_label,
+        "technical_bias": technical_bias,
+        "equations": equations,
+        "rule": "計算式必須保留，但主報告以多公式仲裁後的答案為主；哪個公式最貼近收盤事實，後續由病歷驗證提高或降低權重。",
+        "guardrail": "方程式答案只作技術研判與風控分流，不產生投資命令。",
+    }
+
+
+def build_equation_reasoning_audit(payload: dict) -> dict:
+    """Compare formula output with reasoning layers before trusting the answer."""
+    technical_answer = payload.get("technical_phase", {}).get("equation_answer", {})
+    zero_one = payload.get("weather_satellite_forecast", {}).get("zero_one_tilt", {})
+    practical = payload.get("practical_cause_arbitration", {})
+    arbitration = payload.get("master_arbitration", {})
+    day_night = payload.get("day_night_variance_pattern", {})
+    protection = payload.get("market_protection_layers", {})
+
+    formula_branch = str(technical_answer.get("branch", "NA"))
+    reasoning_branch = str(zero_one.get("branch", "NA"))
+    agreements: list[str] = []
+    conflicts: list[str] = []
+    checks: list[str] = []
+    error_sources: list[str] = []
+    missing_variables: list[str] = []
+    candidate_variables: list[str] = []
+
+    if formula_branch in {"0", "1"} and reasoning_branch in {"0", "1"}:
+        if formula_branch == reasoning_branch:
+            agreements.append(f"技術方程式與0/1推理同向，皆偏 {formula_branch}。")
+        else:
+            conflicts.append(f"技術方程式偏 {formula_branch}，0/1推理偏 {reasoning_branch}，需等待日盤裁判。")
+            error_sources.append("技術公式與推理分支不同，可能是均線/卦位落後、夜盤前哨過度反應或日盤尚未裁判。")
+    else:
+        conflicts.append("技術或0/1其中一方尚未給出明確分支，不能提高信心。")
+        error_sources.append("公式或推理缺少明確分支，誤差來源可能是資料不足或多空接近。")
+
+    if practical.get("practical_primary") in {"internal_structure", "external_reset"}:
+        agreements.append(f"實務病因已有主控層: {practical.get('label', 'NA')}。")
+    else:
+        conflicts.append("實務病因未給明確主控，公式答案需降權。")
+        missing_variables.append("主控病因不明: 需補法人、融資、期貨未平倉、選擇權壓力與族群廣度。")
+
+    if day_night.get("relation_code") in {"night_down_cash_down_validation", "night_down_cash_reversal"}:
+        agreements.append(f"日夜盤傳導已有收盤驗證: {day_night.get('label', 'NA')}。")
+    else:
+        checks.append("日夜盤仍待日盤收盤驗證，公式答案只能列為候選。")
+        missing_variables.append("日夜盤傳導未完成: 需等日盤開盤、30～60分鐘、低點與收盤位置。")
+
+    if protection.get("failed_layers"):
+        conflicts.append("市場保護層出現失效，任何修復公式需降權。")
+        error_sources.append("保護層失效會讓一般技術公式失真，需切換到風控模型。")
+    elif protection.get("label"):
+        agreements.append(f"保護層判讀: {protection.get('label')}。")
+
+    candidate_variables.extend(
+        [
+            "期現差收斂/擴大: 判斷期貨領先是否被現貨承認。",
+            "台指期未平倉與大額交易人淨部位: 判斷避險、放空或回補壓力。",
+            "選擇權Put/Call、最大痛點與Gamma壓力: 判斷關鍵價位附近是否有被動避險流。",
+            "上市/櫃買電子、金融、半導體等族群廣度: 判斷指數是否只靠權值撐盤。",
+            "成交金額與上漲成交量占比: 判斷修復是換手承接還是量縮反彈。",
+            "13:15後尾盤期現差與收盤位置: 判斷隔夜倉位是否提前表態。",
+            "國際事件日曆: CPI、FOMC、非農、結算日、假期與財報周。",
+        ]
+    )
+
+    checks.extend(
+        [
+            "下一交易日先看公式答案是否被開盤方向承認。",
+            "再看30～60分鐘是否收回或跌破關鍵線。",
+            "最後用收盤位置、量能與族群廣度判定公式勝負。",
+        ]
+    )
+
+    agreement_score = len(agreements) - len(conflicts)
+    if agreement_score >= 2:
+        label = "公式與推理大致一致"
+        trust = "medium"
+        conclusion = "可採用公式答案作為主劇本候選，但仍需收盤驗證。"
+    elif agreement_score <= -1:
+        label = "公式與推理衝突"
+        trust = "low"
+        conclusion = "公式答案不得單獨採用，需等待日盤裁判或降權。"
+    else:
+        label = "公式與推理待驗"
+        trust = "low_to_medium"
+        conclusion = "公式與推理尚未形成足夠共識，只能作0/1分流參考。"
+
+    return {
+        "framework": "equation_reasoning_audit_v1",
+        "label": label,
+        "trust": trust,
+        "agreement_score": agreement_score,
+        "formula_answer": technical_answer.get("answer", "NA"),
+        "formula_branch": formula_branch,
+        "reasoning_answer": zero_one.get("label", "NA"),
+        "reasoning_branch": reasoning_branch,
+        "best_formula": technical_answer.get("best_formula", "NA"),
+        "best_formula_reason": technical_answer.get("best_formula_reason", "NA"),
+        "conclusion": conclusion,
+        "agreements": agreements,
+        "conflicts": conflicts,
+        "error_sources": unique_text(error_sources),
+        "missing_variables": unique_text(missing_variables),
+        "candidate_variables": candidate_variables,
+        "math_policy": "先補變數與誤差病歷，再做權重/貝葉斯/狀態轉移；高等數學不得用來掩蓋缺資料。",
+        "next_checks": checks,
+        "rule": "先用複雜方程式算出答案，再用推理式程序核對0/1、病因、日夜盤與保護層；一致才提高可信度，衝突就降權待驗。",
+        "guardrail": "公式推理對照只決定研究信心，不產生投資命令。",
+    }
 
 
 def technical_forecast_alignment(bias: str, bagua: dict, candle: dict, cycle: dict) -> dict:
@@ -11076,6 +11312,7 @@ def render_compact_brief_forecast(payload: dict) -> str:
     reliability = payload.get("direction_reliability_policy", {})
     bagua = payload["bagua_lifecycle"]
     technical = payload["technical_phase"]
+    technical_equation = technical.get("equation_answer", {})
     crash = payload["crash_monitor"]
     market_health = payload.get("market_health", {})
     health_value = market_health.get("health_value", {})
@@ -11083,6 +11320,7 @@ def render_compact_brief_forecast(payload: dict) -> str:
     capital = payload.get("capital_flow", {})
     psychological_warfare = payload.get("psychological_warfare_pattern", {})
     day_night_variance = payload.get("day_night_variance_pattern", {})
+    equation_reasoning = payload.get("equation_reasoning_audit", {})
     next_day_validation = payload.get("error_review", {}).get("next_day_validation", {})
     summary = payload["integrated_summary"]
     policy = payload["production_policy"]
@@ -11124,6 +11362,7 @@ def render_compact_brief_forecast(payload: dict) -> str:
         f"- 下一步: {satellite.get('headline', '資料不足')}｜{satellite.get('next_step', '')}",
         f"- 總仲裁: {arbitration.get('headline', '資料不足')}｜{arbitration.get('risk_posture', 'NA')}｜主控 {arbitration.get('dominant_layer', 'NA')}",
         f"- 防呆保護: {protection.get('label', '資料不足')}｜分數 {protection.get('score', 'NA')}｜失效層 {_top_text(protection.get('failed_layers'), 3, '尚未見失效')}",
+        f"- 公式/推理對照: {equation_reasoning.get('label', '資料不足')}｜信任度 {equation_reasoning.get('trust', 'NA')}｜公式 {equation_reasoning.get('formula_answer', 'NA')}｜推理 {equation_reasoning.get('reasoning_answer', 'NA')}｜結論 {equation_reasoning.get('conclusion', '')}",
         f"- 危機/轉機: {interface.get('label', '資料不足')}｜{interface.get('interface_state', 'NA')}｜峰谷 {_top_text(interface.get('peak_valley_signals'), 2)}",
         f"- 健康/風險: 健康 {num(health_score)} / 100（{health_label}）；風險 {num(risk_value)} / 100；健康價值 {health_value.get('label', '資料不足')} / {health_value.get('value', 'NA')}",
         f"- 崩盤核對: {confirmation.get('stage', '資料不足')}｜假崩盤 {false_crash.get('label', '資料不足')}｜SOP {state_sop.get('state_gua', 'NA')}/{state_sop.get('sop', '資料不足')}",
@@ -11134,7 +11373,9 @@ def render_compact_brief_forecast(payload: dict) -> str:
         f"- 日盤戰術: {intraday.get('label', '資料不足')}｜{intraday.get('summary', '')}｜動作 {intraday.get('action', 'NA')}",
         f"- 外部/跨盤: {cross_market.get('label', '資料不足')}｜{cross_market.get('summary', '')}｜{_top_text(cross_market.get('evidence'), 3)}",
         f"- 基本面命格: {fundamental.get('label', '資料不足')}｜{fundamental.get('score', 'NA')}/100｜支撐 {_top_text(fundamental.get('drivers'), 2)}｜壓力 {_top_text(fundamental.get('pressures'), 2)}",
-        f"- 技術/卦位: 主卦 {primary.get('gua')} / {primary.get('label')}；月週日 {monthly.get('gua')} / {weekly.get('gua')} / {daily.get('gua')}；技術段位 {technical.get('label', '資料不足')}",
+        f"- 技術/卦位答案: {technical_equation.get('answer', '資料不足')}｜分數 {technical_equation.get('score', 'NA')}｜最可信公式 {technical_equation.get('best_formula', 'NA')} / {technical_equation.get('best_formula_answer', 'NA')}｜算式: 主卦 {primary.get('gua')} / {primary.get('label')}；月週日 {monthly.get('gua')} / {weekly.get('gua')} / {daily.get('gua')}；技術段位 {technical.get('label', '資料不足')}",
+        f"- 公式推理驗證: 同向 {_top_text(equation_reasoning.get('agreements'), 2)}｜衝突 {_top_text(equation_reasoning.get('conflicts'), 2, '無重大衝突')}｜下一步 {_top_text(equation_reasoning.get('next_checks'), 2)}",
+        f"- 公式誤差追因: {_top_text(equation_reasoning.get('error_sources'), 2, '暫無重大公式衝突')}｜待補變數 {_top_text(equation_reasoning.get('missing_variables'), 2, '目前無立即缺口')}｜數學策略 {equation_reasoning.get('math_policy', '先補變數再升級數學')}",
         f"- 買賣行為對比: {state_trade.get('gua', 'NA')}/{state_trade.get('label', '資料不足')}；買方 {state_trade.get('buy_behavior', '')}；賣方 {state_trade.get('sell_behavior', '')}",
         f"- 籌碼/量能: {capital_text}",
         f"- 市場心跳: {stethoscope.get('label', '資料不足')}｜分數 {stethoscope.get('score', 'NA')}｜{_compact_vitals(stethoscope)}",

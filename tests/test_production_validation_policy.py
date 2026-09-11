@@ -34,6 +34,7 @@ from predict_market import (
     analyze_master_arbitration,
     analyze_peak_to_valley_warning,
     build_dialogue_core_rules,
+    build_equation_reasoning_audit,
     analyze_route_reference,
     analyze_sector_pressure_observation,
     analyze_situation_psychology_context,
@@ -167,6 +168,9 @@ class ProductionValidationPolicyTest(unittest.TestCase):
         self.assertTrue(technical["enabled"])
         self.assertEqual(len(technical["fixed_formula"]), 6)
         self.assertEqual(technical["fixed_formula"][0]["step"], "1. 主波段")
+        self.assertEqual(technical["equation_answer"]["framework"], "technical_equation_answer_v1")
+        self.assertIn("答案", technical["equation_answer"]["answer"])
+        self.assertTrue(technical["equation_answer"]["best_formula"])
 
     def test_route_reference_uses_historical_pattern_samples(self):
         data = pd.read_csv(ROOT / "data" / "processed" / "twii_daily.csv")
@@ -481,6 +485,37 @@ class ProductionValidationPolicyTest(unittest.TestCase):
         self.assertTrue(rules["trigger_conditions"])
         self.assertIn("觸發鈕", rules["focus"])
         self.assertIn("報告只輸出仲裁結果", "；".join(rules["model_rules"]))
+
+    def test_equation_reasoning_audit_compares_formula_with_reasoning(self):
+        audit = build_equation_reasoning_audit(
+            {
+                "technical_phase": {
+                    "equation_answer": {
+                        "answer": "答案偏1：修復/續攻候選",
+                        "branch": "1",
+                        "best_formula": "均線方程式",
+                        "best_formula_reason": "收盤站回20日線。",
+                    }
+                },
+                "weather_satellite_forecast": {
+                    "zero_one_tilt": {"label": "偏1：修復候選待確認", "branch": "1"}
+                },
+                "practical_cause_arbitration": {
+                    "practical_primary": "internal_structure",
+                    "label": "內部主病灶，外部觸發",
+                },
+                "master_arbitration": {},
+                "day_night_variance_pattern": {"relation_code": "pending_day_validation", "label": "待日盤驗證"},
+                "market_protection_layers": {"label": "保護層有效", "failed_layers": []},
+            }
+        )
+        self.assertEqual(audit["framework"], "equation_reasoning_audit_v1")
+        self.assertEqual(audit["formula_branch"], "1")
+        self.assertEqual(audit["reasoning_branch"], "1")
+        self.assertIn("一致", audit["label"])
+        self.assertIn("推理式程序", audit["rule"])
+        self.assertIn("高等數學", audit["math_policy"])
+        self.assertTrue(audit["candidate_variables"])
 
     def test_compact_forecast_record_persists_treatment_tracking_for_next_episode(self):
         payload = {
