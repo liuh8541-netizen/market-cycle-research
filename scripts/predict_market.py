@@ -10898,6 +10898,45 @@ def _market_dashboard_lines(payload: dict, night_trend: dict, intraday: dict) ->
     ]
 
 
+def _night_cash_relation_lines(payload: dict, night_trend: dict) -> list[str]:
+    premarket = payload.get("premarket", {})
+    basis_audit = premarket.get("night_basis_audit", {})
+    latest_tracking = payload.get("night_cash_tracking", {}).get("latest", {})
+
+    official = safe_float(night_trend.get("official_spread_per") or basis_audit.get("official_spread_per"))
+    open_close = safe_float(night_trend.get("open_close_return") or basis_audit.get("open_close_return"))
+    previous_night = safe_float(
+        night_trend.get("previous_night_close_return") or basis_audit.get("vs_previous_night_close_return")
+    )
+    official_vs_path = official - open_close if official is not None and open_close is not None else None
+    previous_vs_official = previous_night - official if previous_night is not None and official is not None else None
+
+    relation_lines = [
+        f"- 夜盤基準差: 官方 {pct(official)}；開收 {pct(open_close)}；前夜 {pct(previous_night)}；官方-開收 {pct(official_vs_path)}；前夜-官方 {pct(previous_vs_official)}",
+        f"- 基準說明: {basis_audit.get('summary', '三基準分開看：官方漲跌看報價基準，開收看夜盤路徑，前夜比較看夜盤連續性。')}",
+    ]
+
+    if latest_tracking:
+        relation_lines.append(
+            "- 最近夜日傳導: "
+            f"{latest_tracking.get('signal_date', 'NA')}；夜盤 {pct(latest_tracking.get('tx_night_spread_per'))}；"
+            f"日盤開盤 {pct(latest_tracking.get('gap_return'))}；盤中 {pct(latest_tracking.get('intraday_return'))}；"
+            f"收盤 {pct(latest_tracking.get('cash_close_return'))}；狀態 {latest_tracking.get('sync_status', 'NA')}；"
+            f"{latest_tracking.get('reason_summary', '')}"
+        )
+        relation_lines.append(
+            "- 日盤影響判讀: "
+            f"夜盤到開盤 {'同步' if latest_tracking.get('night_gap_aligned') else '不同步'}；"
+            f"夜盤到收盤 {'同步' if latest_tracking.get('night_close_aligned') else '不同步'}；"
+            f"開盤後 {'延續' if latest_tracking.get('gap_intraday_continuation') else '反向修正'}；"
+            f"{latest_tracking.get('short_squeeze_summary', '')}"
+        )
+    else:
+        relation_lines.append("- 最近夜日傳導: 無已完成對照資料，僅能等待日盤驗證。")
+
+    return relation_lines
+
+
 def render_compact_brief_forecast(payload: dict) -> str:
     check = payload["index_check"]
     date_audit = payload.get("market_date_audit", {})
@@ -10970,6 +11009,7 @@ def render_compact_brief_forecast(payload: dict) -> str:
         "",
         "# 證據分層",
         f"- 夜盤: {night_trend.get('label', '資料不足')}｜官方 {pct(night_trend.get('official_spread_per'))}；開收 {pct(night_trend.get('open_close_return'))}；前夜 {pct(night_trend.get('previous_night_close_return'))}；收 {num(night_trend.get('close'))}；低 {num(night_trend.get('low'))}；{night_trend.get('path_shape', '')}",
+        *_night_cash_relation_lines(payload, night_trend),
         f"- 日盤戰術: {intraday.get('label', '資料不足')}｜{intraday.get('summary', '')}｜動作 {intraday.get('action', 'NA')}",
         f"- 外部/跨盤: {cross_market.get('label', '資料不足')}｜{cross_market.get('summary', '')}｜{_top_text(cross_market.get('evidence'), 3)}",
         f"- 基本面命格: {fundamental.get('label', '資料不足')}｜{fundamental.get('score', 'NA')}/100｜支撐 {_top_text(fundamental.get('drivers'), 2)}｜壓力 {_top_text(fundamental.get('pressures'), 2)}",
