@@ -2,6 +2,12 @@
 
 ## 2026-09-12
 
+### 對談核心價值觀
+
+- 新增 `research/CORE_VALUES_FROM_DIALOGUE.md`，把長期對談中可長期保留的內容整理成模型最高層價值觀。
+- 核心價值觀包含：市場是有生命的統計系統、預測追求勝率優勢、知己知彼是風險預知管控、預防勝於治療、資料是意圖痕跡、哲學必須科學化、複雜推理最後收斂為 0/1 主劇本、不可測因素只能風控、錯誤是進化燃料、AI 是高空視野與濾波器。
+- `research/RESEARCH_INDEX.md` 與 `research/HANDOFF_CURRENT.md` 已加入入口，確保跨電腦接續時先讀取這份核心準則。
+
 ### AI 濾波層與對談核心規則入模
 
 - `scripts/predict_market.py` 新增 `build_dialogue_core_rules`，把長期對談中反覆出現的核心觀念正式轉成模型規則。
