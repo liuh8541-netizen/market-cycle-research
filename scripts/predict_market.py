@@ -7824,6 +7824,9 @@ def build_equation_reasoning_audit(payload: dict) -> dict:
     arbitration = payload.get("master_arbitration", {})
     day_night = payload.get("day_night_variance_pattern", {})
     protection = payload.get("market_protection_layers", {})
+    premarket = payload.get("premarket", {})
+    health = payload.get("market_health", {})
+    health_value = health.get("health_value", {})
 
     formula_branch = str(technical_answer.get("branch", "NA"))
     reasoning_branch = str(zero_one.get("branch", "NA"))
@@ -7833,6 +7836,18 @@ def build_equation_reasoning_audit(payload: dict) -> dict:
     error_sources: list[str] = []
     missing_variables: list[str] = []
     candidate_variables: list[str] = []
+    swing_factors: list[dict] = []
+
+    def add_swing(name: str, score, direction: str, reason: str) -> None:
+        numeric = safe_float(score)
+        swing_factors.append(
+            {
+                "name": name,
+                "score": numeric,
+                "direction": direction,
+                "reason": reason,
+            }
+        )
 
     if formula_branch in {"0", "1"} and reasoning_branch in {"0", "1"}:
         if formula_branch == reasoning_branch:
@@ -7862,6 +7877,49 @@ def build_equation_reasoning_audit(payload: dict) -> dict:
     elif protection.get("label"):
         agreements.append(f"保護層判讀: {protection.get('label')}。")
 
+    formula_score = safe_float(technical_answer.get("score"))
+    if formula_score is not None:
+        add_swing(
+            "公式淨分",
+            formula_score,
+            "push_1" if formula_score > 0 else "push_0" if formula_score < 0 else "neutral",
+            f"技術方程式分數 {formula_score:g}，代表公式端偏 {'攻上' if formula_score > 0 else '攻不上/回測' if formula_score < 0 else '未表態'}。",
+        )
+    reasoning_score = safe_float(zero_one.get("score"))
+    if reasoning_score is not None:
+        add_swing(
+            "推理淨分",
+            reasoning_score,
+            "push_1" if reasoning_score > 0 else "push_0" if reasoning_score < 0 else "neutral",
+            f"0/1推理分數 {reasoning_score:g}，代表推理端偏 {'攻上' if reasoning_score > 0 else '攻不上/測壓' if reasoning_score < 0 else '未表態'}。",
+        )
+    night = safe_float(premarket.get("tx_night_spread_per"))
+    if night is not None:
+        add_swing(
+            "夜盤前哨",
+            night * 100,
+            "push_1" if night > 0.003 else "push_0" if night < -0.003 else "neutral",
+            f"台指夜盤 {pct(night)}，屬 {'偏多觸發' if night > 0.003 else '偏空觸發' if night < -0.003 else '近零待驗'}。",
+        )
+    if practical.get("practical_primary") == "external_reset":
+        add_swing("外部重置", -2, "push_0", "外部重置接管時，攻上劇本需先降權。")
+    elif practical.get("practical_primary") == "internal_structure":
+        add_swing("病灶主控", -1, "push_0", "內部主病灶存在時，攻上必須先證明換手已吸收。")
+    if protection.get("failed_layers"):
+        add_swing("保護層", -3, "push_0", "保護層失效會把攻上劇本轉成風控優先。")
+    elif protection.get("label"):
+        add_swing("保護層", 1, "push_1", f"{protection.get('label')}，代表攻上劇本尚未被風控否決。")
+    if health_value.get("controllable_risk") is False:
+        add_swing("健康價值", -1, "push_0", "健康價值判定風險不可控，攻上劇本降權。")
+    elif health_value.get("controllable_risk") is True:
+        add_swing("健康價值", 1, "push_1", "健康價值仍可控，攻上劇本保留。")
+    if day_night.get("relation_code") == "pending_day_validation":
+        add_swing("日夜盤裁判", 0, "gate", "日盤尚未裁判，任何微弱優勢都不能升級成定論。")
+    elif day_night.get("relation_code") == "night_down_cash_down_validation":
+        add_swing("日夜盤裁判", -2, "push_0", "夜跌日跌同步，代表測壓被現貨承認。")
+    elif day_night.get("relation_code") == "night_down_cash_reversal":
+        add_swing("日夜盤裁判", 2, "push_1", "夜跌被日盤收回，代表修復力勝出。")
+
     candidate_variables.extend(
         [
             "期現差收斂/擴大: 判斷期貨領先是否被現貨承認。",
@@ -7874,6 +7932,16 @@ def build_equation_reasoning_audit(payload: dict) -> dict:
         ]
     )
 
+    black_box_unpredictable = {
+        "label": "真正不可測事件",
+        "definition": "事前沒有公開資料、價格痕跡、量能異常、期權避險、新聞暗示或資金移動，直到極短時間內才突然變卦。",
+        "examples": [
+            "絕對保密的政策、戰爭、制裁、重大事故或交易系統事件。",
+            "無法從公開市場資料提前觀察的瞬間流動性斷裂。",
+        ],
+        "model_policy": "不可假裝能預測；只能用停損防呆、倉位上限、關鍵線失守核對與事後病歷修正處理。",
+    }
+
     checks.extend(
         [
             "下一交易日先看公式答案是否被開盤方向承認。",
@@ -7883,6 +7951,16 @@ def build_equation_reasoning_audit(payload: dict) -> dict:
     )
 
     agreement_score = len(agreements) - len(conflicts)
+    push_1 = sum(abs(item["score"] or 0) for item in swing_factors if item["direction"] == "push_1")
+    push_0 = sum(abs(item["score"] or 0) for item in swing_factors if item["direction"] == "push_0")
+    marginal_balance = push_1 - push_0
+    gate_factors = [item["reason"] for item in swing_factors if item["direction"] == "gate"]
+    if marginal_balance >= 2:
+        marginal_label = "邊際偏1：攻上稍占優勢"
+    elif marginal_balance <= -2:
+        marginal_label = "邊際偏0：攻不上/回測稍占優勢"
+    else:
+        marginal_label = "邊際拉鋸：微差待驗"
     if agreement_score >= 2:
         label = "公式與推理大致一致"
         trust = "medium"
@@ -7910,9 +7988,16 @@ def build_equation_reasoning_audit(payload: dict) -> dict:
         "conclusion": conclusion,
         "agreements": agreements,
         "conflicts": conflicts,
+        "marginal_label": marginal_label,
+        "marginal_balance": marginal_balance,
+        "push_1_score": push_1,
+        "push_0_score": push_0,
+        "swing_factors": swing_factors,
+        "gate_factors": gate_factors,
         "error_sources": unique_text(error_sources),
         "missing_variables": unique_text(missing_variables),
         "candidate_variables": candidate_variables,
+        "black_box_unpredictable": black_box_unpredictable,
         "research_status": "experimental_hypothesis",
         "math_policy": "先補變數與誤差病歷，再做權重/貝葉斯/狀態轉移；高等數學不得用來掩蓋缺資料。",
         "next_checks": checks,
@@ -11224,6 +11309,13 @@ def _signed_points(value) -> str:
     return f"{sign}{numeric:,.2f}"
 
 
+def _score_num(value) -> str:
+    numeric = safe_float(value)
+    if numeric is None:
+        return "NA"
+    return f"{numeric:,.2f}"
+
+
 def _market_dashboard_lines(payload: dict, night_trend: dict, intraday: dict) -> list[str]:
     check = payload["index_check"]
     premarket = payload.get("premarket", {})
@@ -11377,7 +11469,9 @@ def render_compact_brief_forecast(payload: dict) -> str:
         f"- 基本面命格: {fundamental.get('label', '資料不足')}｜{fundamental.get('score', 'NA')}/100｜支撐 {_top_text(fundamental.get('drivers'), 2)}｜壓力 {_top_text(fundamental.get('pressures'), 2)}",
         f"- 技術/卦位答案: {technical_equation.get('answer', '資料不足')}｜狀態 {technical_equation.get('research_status', 'experimental_hypothesis')}｜分數 {technical_equation.get('score', 'NA')}｜最可信公式 {technical_equation.get('best_formula', 'NA')} / {technical_equation.get('best_formula_answer', 'NA')}｜算式: 主卦 {primary.get('gua')} / {primary.get('label')}；月週日 {monthly.get('gua')} / {weekly.get('gua')} / {daily.get('gua')}；技術段位 {technical.get('label', '資料不足')}",
         f"- 公式推理驗證: 同向 {_top_text(equation_reasoning.get('agreements'), 2)}｜衝突 {_top_text(equation_reasoning.get('conflicts'), 2, '無重大衝突')}｜下一步 {_top_text(equation_reasoning.get('next_checks'), 2)}",
+        f"- 邊際搖擺因子: {equation_reasoning.get('marginal_label', '資料不足')}｜偏1 {_score_num(equation_reasoning.get('push_1_score'))}；偏0 {_score_num(equation_reasoning.get('push_0_score'))}；淨差 {_score_num(equation_reasoning.get('marginal_balance'))}｜卡關 {_top_text(equation_reasoning.get('gate_factors'), 1, '無')}",
         f"- 公式誤差追因: {_top_text(equation_reasoning.get('error_sources'), 2, '暫無重大公式衝突')}｜待補變數 {_top_text(equation_reasoning.get('missing_variables'), 2, '目前無立即缺口')}｜數學策略 {equation_reasoning.get('math_policy', '先補變數再升級數學')}",
+        f"- 不可測邊界: {equation_reasoning.get('black_box_unpredictable', {}).get('label', '真正不可測事件')}｜{equation_reasoning.get('black_box_unpredictable', {}).get('model_policy', '不可假裝能預測，只能用風控防呆處理。')}",
         f"- 買賣行為對比: {state_trade.get('gua', 'NA')}/{state_trade.get('label', '資料不足')}；買方 {state_trade.get('buy_behavior', '')}；賣方 {state_trade.get('sell_behavior', '')}",
         f"- 籌碼/量能: {capital_text}",
         f"- 市場心跳: {stethoscope.get('label', '資料不足')}｜分數 {stethoscope.get('score', 'NA')}｜{_compact_vitals(stethoscope)}",

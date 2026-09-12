@@ -518,6 +518,11 @@ class ProductionValidationPolicyTest(unittest.TestCase):
         self.assertIn("高等數學", audit["math_policy"])
         self.assertTrue(audit["candidate_variables"])
         self.assertEqual(audit["research_status"], "experimental_hypothesis")
+        self.assertIn("marginal_label", audit)
+        self.assertGreater(audit["push_1_score"], 0)
+        self.assertTrue(audit["swing_factors"])
+        self.assertIn("不可測", audit["black_box_unpredictable"]["label"])
+        self.assertIn("不可假裝能預測", audit["black_box_unpredictable"]["model_policy"])
 
     def test_compact_forecast_record_persists_treatment_tracking_for_next_episode(self):
         payload = {
